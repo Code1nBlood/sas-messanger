@@ -12,6 +12,15 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [activeChatId, setActiveChatId] = useState<string>(mockChats[0]?.id ?? "");
   const [inputValue, setInputValue] = useState("");
+  const [searchVal, setSearchVal] = useState("");
+
+  const filteredChats = useMemo (() => {
+    const query = searchVal.trim().toLowerCase();
+
+    if (!query) return chats;
+
+    return chats.filter((chat) => chat.title.toLowerCase().includes(query));
+  }, [chats, searchVal]);
 
   const activeChat = useMemo(() => {
     return mockChats.find((chat) => chat.id === activeChatId);
@@ -50,9 +59,11 @@ export default function App() {
   return (
     <div className="flex h-screen bg-slate-100 text-slate-900">
       <ChatList
-        chats={chats}
+        chats={filteredChats}
         activeChatId={activeChatId}
         onSelectChat={handleSelectedChat}
+        onSearch={setSearchVal}
+        searchVal={searchVal}
       />
 
       <ChatWindow
