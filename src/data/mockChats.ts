@@ -18,7 +18,7 @@ export const mockChats: Chat[] = [
         unreadCount: 1,
         isOnline: true,
         isTyping: false,
-        avatarUrl: 'https://i.pravatar.cc/300',
+        avatarUrl: 'https://i.pravatar.cc/301',
     },
 
     {
@@ -28,7 +28,7 @@ export const mockChats: Chat[] = [
         unreadCount: 5,
         isOnline: false,
         isTyping: false,
-        avatarUrl: 'https://i.pravatar.cc/300',
+        avatarUrl: 'https://i.pravatar.cc/302',
     },
 ];
     

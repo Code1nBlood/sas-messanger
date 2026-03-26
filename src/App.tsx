@@ -10,7 +10,7 @@ import { generateMessageId, getCurrentTime } from "./helpers/helpers";
 export default function App() {
   const [chats, setChats] = useState<Chat[]>(mockChats);
   const [messages, setMessages] = useState<Message[]>(mockMessages);
-  const [activeChatId, setActiveChatId] = useState<string>(mockChats[0]?.id ?? "");
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [searchVal, setSearchVal] = useState("");
 
@@ -36,6 +36,11 @@ export default function App() {
     setChats((prevChats) => prevChats.map((chat) => chat.id === chatId ?{...chat, unreadCount: 0}: chat));
   }
 
+  function handleCloseChat() {
+    setActiveChatId(null);
+    setInputValue("");
+  }
+
   function handleSendMessage() {
     const text = inputValue.trim();
 
@@ -49,9 +54,10 @@ export default function App() {
       time: getCurrentTime(),
     };
 
-    setMessages((pevMessages) => [...pevMessages, newMessage]);
+    setMessages((pevMessages) =>{ const updatedMessages = [...pevMessages, newMessage]
+    return updatedMessages;});
 
-    setChats((prevChats) => prevChats.map((chat) => chat.id === activeChatId ?{...chat, lastMessage: text}: chat));
+    setChats((prevChats) => prevChats.map((chat) => chat.id === activeChatId ?{...chat, lastMessage: text, isTyping: false}: chat));
 
     setInputValue("");
   }
@@ -64,6 +70,7 @@ export default function App() {
         onSelectChat={handleSelectedChat}
         onSearch={setSearchVal}
         searchVal={searchVal}
+
       />
 
       <ChatWindow
@@ -72,6 +79,7 @@ export default function App() {
         inputValue={inputValue}
         onInputChange={setInputValue}
         onSendMessage={handleSendMessage}
+        onCloseChat={handleCloseChat}
       />
     </div>
   );

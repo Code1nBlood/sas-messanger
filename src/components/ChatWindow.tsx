@@ -1,7 +1,9 @@
 import type { Chat } from "../types/chat";
 import type { Message } from "../types/message";
+import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
+import { EmptyChatState } from "./EmptyChat";
 
 type ChatWindowProps = {
   chat: Chat | undefined;
@@ -9,6 +11,7 @@ type ChatWindowProps = {
   inputValue: string;
   onInputChange: (value: string) => void;
   onSendMessage: () => void;
+  onCloseChat: () => void;
 };
 
 export function ChatWindow({
@@ -17,20 +20,17 @@ export function ChatWindow({
   inputValue,
   onInputChange,
   onSendMessage,
+  onCloseChat,
 }: ChatWindowProps) {
   if (!chat) {
     return (
-      <section className="flex flex-1 items-center justify-center bg-slate-50 text-slate-400">
-        Выберите чат
-      </section>
+      <EmptyChatState />
     );
   }
 
   return (
     <section className="flex flex-1 flex-col bg-slate-50">
-      <div className="flex h-16 items-center border-b border-slate-200 bg-white px-5 font-bold text-slate-900">
-        {chat.title}
-      </div>
+      <ChatHeader chat={chat} onCloseChat={onCloseChat} />
 
       <MessageList messages={messages} />
 

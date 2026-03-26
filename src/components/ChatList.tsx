@@ -3,7 +3,7 @@ import { ChatListItem } from "./ChatItem";
 
 type ChatListProps = {
   chats: Chat[];
-  activeChatId: string;
+  activeChatId: string | null;
   searchVal:string
   onSelectChat: (chatId: string) => void;
   onSearch:(value:string) => void

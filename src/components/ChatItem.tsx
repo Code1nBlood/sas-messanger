@@ -1,4 +1,5 @@
 import type { Chat } from "../types/chat";
+import { Avatar } from "./Avatar";
 
 type ChatListItemProps = {
   chat: Chat;
@@ -16,11 +17,17 @@ export function ChatListItem({ chat, isActive, onSelect }: ChatListItemProps) {
         isActive ? "bg-blue-100" : "bg-transparent",
       ].join(" ")}
     >
+      <div className="flex items-center gap-3">
+        <Avatar title={chat.title} avatarUrl={chat.avatarUrl}
+          isOnline={chat.isOnline} size="md" />
 
-      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="mb-1 font-semibold text-slate-900">{chat.title}</div>
-          <div className="text-sm text-slate-500">{chat.lastMessage}</div>
+          {chat.isTyping ? (
+            <div className="truncate text-sm text-shadow-taupe-900">юзверь печатает...</div>
+          ): (
+            <div className="truncate text-sm text-slate-500">{chat.lastMessage}</div>
+          )}
         </div>
       
 
