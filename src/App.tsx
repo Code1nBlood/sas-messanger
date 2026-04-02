@@ -27,8 +27,8 @@ export default function App() {
   }, [chats, activeChatId]);
 
   const currentMessages = useMemo(() => {
-    return mockMessages.filter((message) => message.chatId === activeChatId);
-  }, [messages,activeChatId]);
+    return messages.filter((message) => message.chatId === activeChatId);
+  }, [messages, activeChatId]);
 
   function handleSelectedChat(chatId: string){
     setActiveChatId(chatId);
@@ -54,8 +54,7 @@ export default function App() {
       time: getCurrentTime(),
     };
 
-    setMessages((pevMessages) =>{ const updatedMessages = [...pevMessages, newMessage]
-    return updatedMessages;});
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
 
     setChats((prevChats) => prevChats.map((chat) => chat.id === activeChatId ?{...chat, lastMessage: text, isTyping: false}: chat));
 
