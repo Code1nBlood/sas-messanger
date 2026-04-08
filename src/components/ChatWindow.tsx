@@ -1,5 +1,5 @@
 import type { Chat } from "../types/chat";
-import type { Message } from "../types/message";
+import type { Message, Attachment } from "../types/message";
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
@@ -10,8 +10,12 @@ type ChatWindowProps = {
   messages: Message[];
   inputValue: string;
   onInputChange: (value: string) => void;
-  onSendMessage: () => void;
+  onSendMessage: (attachments?: Attachment[]) => void;
   onCloseChat: () => void;
+  onAttachFiles: (files: FileList) => void;
+  pendingAttachments: Attachment[] | null;
+  onClearAttachments: () => void;
+  onRemoveAttachment: (id: string) => void;
 };
 
 export function ChatWindow({
@@ -21,6 +25,10 @@ export function ChatWindow({
   onInputChange,
   onSendMessage,
   onCloseChat,
+  onAttachFiles,
+  pendingAttachments,
+  onClearAttachments,
+  onRemoveAttachment,
 }: ChatWindowProps) {
   if (!chat) {
     return (
@@ -38,6 +46,10 @@ export function ChatWindow({
         value={inputValue}
         onChange={onInputChange}
         onSend={onSendMessage}
+        onAttachFiles={onAttachFiles}
+        pendingAttachments={pendingAttachments}
+        onClearAttachments={onClearAttachments}
+        onRemoveAttachment={onRemoveAttachment}
       />
     </section>
   );
