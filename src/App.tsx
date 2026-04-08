@@ -4,7 +4,7 @@ import { ChatWindow } from "./components/ChatWindow";
 import { mockChats } from "./data/mockChats";
 import { mockMessages } from "./data/mockMessages";
 import type {Chat} from "./types/chat";
-import type {Message} from "./types/message";
+import type {Message, Attachment} from "./types/message";
 import { generateMessageId, getCurrentTime } from "./helpers/helpers";
 
 export default function App() {
@@ -13,6 +13,7 @@ export default function App() {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [searchVal, setSearchVal] = useState("");
+  const [pendingAttachments, setPendingAttachments] = useState<Attachment[] | null>(null);
 
   const filteredChats = useMemo (() => {
     const query = searchVal.trim().toLowerCase();
@@ -39,12 +40,50 @@ export default function App() {
   function handleCloseChat() {
     setActiveChatId(null);
     setInputValue("");
+    setPendingAttachments(null);
   }
 
-  function handleSendMessage() {
+  function handleAttachFiles(files: FileList) {
+    const newAttachments: Attachment[] = Array.from(files).map((file) => {
+      const isImage = file.type.startsWith("image/");
+      return {
+        id: generateMessageId(),
+        type: isImage ? "image" : "file",
+        name: file.name,
+        url: URL.createObjectURL(file),
+        size: file.size,
+      };
+    });
+
+    setPendingAttachments((prev) => {
+      const existing = prev || [];
+      return [...existing, ...newAttachments];
+    });
+  }
+
+  function handleClearAttachments() {
+    if (pendingAttachments) {
+      pendingAttachments.forEach((att) => URL.revokeObjectURL(att.url));
+    }
+    setPendingAttachments(null);
+  }
+
+  function handleRemoveAttachment(id: string) {
+    setPendingAttachments((prev) => {
+      if (!prev) return null;
+      const att = prev.find((a) => a.id === id);
+      if (att) URL.revokeObjectURL(att.url);
+      const filtered = prev.filter((a) => a.id !== id);
+      return filtered.length > 0 ? filtered : null;
+    });
+  }
+
+  function handleSendMessage(attachments?: Attachment[]) {
     const text = inputValue.trim();
 
-    if (!text || !activeChatId) return;
+    if ((!text && (!attachments || attachments.length === 0)) || !activeChatId) return;
+
+    const allAttachments = attachments || pendingAttachments;
 
     const newMessage: Message = {
       id: generateMessageId(),
@@ -52,13 +91,25 @@ export default function App() {
       sender: "me",
       text,
       time: getCurrentTime(),
+      attachments: allAttachments && allAttachments.length > 0 ? allAttachments : undefined,
     };
 
     setMessages((prevMessages) => [...prevMessages, newMessage]);
 
-    setChats((prevChats) => prevChats.map((chat) => chat.id === activeChatId ?{...chat, lastMessage: text, isTyping: false}: chat));
+    const lastMessageText = text || (allAttachments && allAttachments.length > 0 
+      ? allAttachments.length === 1 
+        ? allAttachments[0].name 
+        : `${allAttachments.length} вложений`
+      : "");
+
+    setChats((prevChats) => prevChats.map((chat) => 
+      chat.id === activeChatId 
+        ? {...chat, lastMessage: lastMessageText, isTyping: false} 
+        : chat
+    ));
 
     setInputValue("");
+    handleClearAttachments();
   }
 
   return (
@@ -79,6 +130,10 @@ export default function App() {
         onInputChange={setInputValue}
         onSendMessage={handleSendMessage}
         onCloseChat={handleCloseChat}
+        onAttachFiles={handleAttachFiles}
+        pendingAttachments={pendingAttachments}
+        onClearAttachments={handleClearAttachments}
+        onRemoveAttachment={handleRemoveAttachment}
       />
     </div>
   );
