@@ -14,7 +14,6 @@ type ChatWindowProps = {
   onCloseChat: () => void;
   onAttachFiles: (files: FileList) => void;
   pendingAttachments: Attachment[] | null;
-  onClearAttachments: () => void;
   onRemoveAttachment: (id: string) => void;
 };
 
@@ -27,7 +26,6 @@ export function ChatWindow({
   onCloseChat,
   onAttachFiles,
   pendingAttachments,
-  onClearAttachments,
   onRemoveAttachment,
 }: ChatWindowProps) {
   if (!chat) {
@@ -48,7 +46,6 @@ export function ChatWindow({
         onSend={onSendMessage}
         onAttachFiles={onAttachFiles}
         pendingAttachments={pendingAttachments}
-        onClearAttachments={onClearAttachments}
         onRemoveAttachment={onRemoveAttachment}
       />
     </section>

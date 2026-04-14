@@ -9,7 +9,6 @@ type MessageInputProps = {
   onSend: (attachments?: Attachment[]) => void;
   onAttachFiles: (files: FileList) => void;
   pendingAttachments: Attachment[] | null;
-  onClearAttachments: () => void;
   onRemoveAttachment: (id: string) => void;
 };
 
@@ -19,7 +18,6 @@ export function MessageInput({
   onSend,
   onAttachFiles,
   pendingAttachments,
-  onClearAttachments,
   onRemoveAttachment,
 }: MessageInputProps) {
   const [showEmoji, setShowEmoji] = useState(false);
@@ -35,7 +33,6 @@ export function MessageInput({
 
   function handleSend() {
     onSend(pendingAttachments || undefined);
-    onClearAttachments();
   }
 
   function handleEmojiSelect(emoji: string) {
