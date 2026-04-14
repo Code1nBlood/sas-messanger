@@ -61,13 +61,6 @@ export default function App() {
     });
   }
 
-  function handleClearAttachments() {
-    if (pendingAttachments) {
-      pendingAttachments.forEach((att) => URL.revokeObjectURL(att.url));
-    }
-    setPendingAttachments(null);
-  }
-
   function handleRemoveAttachment(id: string) {
     setPendingAttachments((prev) => {
       if (!prev) return null;
@@ -102,14 +95,14 @@ export default function App() {
         : `${allAttachments.length} вложений`
       : "");
 
-    setChats((prevChats) => prevChats.map((chat) => 
-      chat.id === activeChatId 
-        ? {...chat, lastMessage: lastMessageText, isTyping: false} 
+    setChats((prevChats) => prevChats.map((chat) =>
+      chat.id === activeChatId
+        ? {...chat, lastMessage: lastMessageText, isTyping: false}
         : chat
     ));
 
     setInputValue("");
-    handleClearAttachments();
+    setPendingAttachments(null);
   }
 
   return (
@@ -132,7 +125,6 @@ export default function App() {
         onCloseChat={handleCloseChat}
         onAttachFiles={handleAttachFiles}
         pendingAttachments={pendingAttachments}
-        onClearAttachments={handleClearAttachments}
         onRemoveAttachment={handleRemoveAttachment}
       />
     </div>
