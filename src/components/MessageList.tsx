@@ -7,10 +7,11 @@ type MessageListProps = {
 };
 
 export function MessageList({ messages }: MessageListProps) {
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() =>
-  bottomRef.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   if (messages.length === 0) {
     return (
@@ -21,11 +22,11 @@ export function MessageList({ messages }: MessageListProps) {
   }
 
   return (
-    <div className="flex flex-1 flex-col-reverse gap-3 overflow-y-auto p-4">
-      {messages.slice().reverse().map((message) => (
+    <div className="flex flex-1 flex-col justify-end gap-3 overflow-y-auto p-4">
+      {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}
-      <div ref={bottomRef}></div>
+      <div ref={messagesEndRef}></div>
     </div>
   );
 }
