@@ -27,7 +27,7 @@ export function ChatList({
           className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500" />
       </div>
 
-      <div className="flex flex-col gap-2 p-2">
+      <div className="flex flex-col gap-2 p-2" style={{ flex: 1, overflowY: 'auto' }}>
         {chats.length > 0 ? (
           chats.map((chat) => (
             <ChatListItem
