@@ -24,7 +24,7 @@ export const mockMessages: Message[] = [
   },
   {
     id: "4",
-    chatId: "1",
+    chatId: "4",
     sender: "me",
     text: "Уже делаю",
     time: "10:04",
