@@ -1,10 +1,12 @@
-import { use, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ChatList } from "./components/ChatList";
 import { ChatWindow } from "./components/ChatWindow";
+import { AuthForm } from "./components/AuthForm";
 import { mockChats } from "./data/mockChats";
 import { mockMessages } from "./data/mockMessages";
 import type {Chat} from "./types/chat";
 import type {Message, Attachment} from "./types/message";
+import type {User} from "./types/user";
 import { generateMessageId, getCurrentTime } from "./helpers/helpers";
 
 export default function App() {
@@ -14,6 +16,7 @@ export default function App() {
   const [inputValue, setInputValue] = useState("");
   const [searchVal, setSearchVal] = useState("");
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[] | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const filteredChats = useMemo (() => {
     const query = searchVal.trim().toLowerCase();
@@ -24,12 +27,36 @@ export default function App() {
   }, [chats, searchVal]);
 
   const activeChat = useMemo(() => {
-    return mockChats.find((chat) => chat.id === activeChatId);
+    return chats.find((chat) => chat.id === activeChatId);
   }, [chats, activeChatId]);
 
   const currentMessages = useMemo(() => {
     return messages.filter((message) => message.chatId === activeChatId);
   }, [messages, activeChatId]);
+
+  function handleLogin(email: string, _password: string) {
+    if (email) {
+      setCurrentUser({
+        id: "1",
+        email,
+        name: email.split("@")[0],
+      });
+    } else {
+      alert("Заполните email и пароль");
+    }
+  }
+
+  function handleRegister(name: string, email: string, _password: string) {
+    if (email) {
+      setCurrentUser({
+        id: "1",
+        email,
+        name: name || email.split("@")[0],
+      });
+    } else {
+      alert("Заполните email и пароль");
+    }
+  }
 
   function handleSelectedChat(chatId: string){
     setActiveChatId(chatId);
@@ -89,9 +116,9 @@ export default function App() {
 
     setMessages((prevMessages) => [...prevMessages, newMessage]);
 
-    const lastMessageText = text || (allAttachments && allAttachments.length > 0 
-      ? allAttachments.length === 1 
-        ? allAttachments[0].name 
+    const lastMessageText = text || (allAttachments && allAttachments.length > 0
+      ? allAttachments.length === 1
+        ? allAttachments[0].name
         : `${allAttachments.length} вложений`
       : "");
 
@@ -103,6 +130,10 @@ export default function App() {
 
     setInputValue("");
     setPendingAttachments(null);
+  }
+
+  if (!currentUser) {
+    return <AuthForm onLogin={handleLogin} onRegister={handleRegister} />;
   }
 
   return (
