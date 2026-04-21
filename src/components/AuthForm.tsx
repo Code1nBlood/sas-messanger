@@ -11,8 +11,55 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [nameError, setNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const validateForm = () => {
+    let isValid = true;
+
+    setNameError("");
+    setEmailError("");
+    setPasswordError("");
+
+    // Валидации
+    if (!isLogin && name.trim() === "") {
+      setNameError("Логин не может быть пустым.");
+      isValid = false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!isLogin) { // Registration: always validate email format
+      if (!emailRegex.test(email)) {
+        setEmailError("Пожалуйста, введите корректный Email.");
+        isValid = false;
+      }
+    } else { // при login валидация
+      if (email.includes('@')) { // если есть собакен
+        if (!emailRegex.test(email)) {
+          setEmailError("Пожалуйста, введите корректный Email.");
+          isValid = false;
+        }
+      } else if (email.trim() === "") { 
+        setEmailError("Пожалуйста, введите логин или Email.");
+        isValid = false;
+      }
+    }
+
+    if (password.length < 6) {
+      setPasswordError("Пароль должен содержать не менее 6 символов.");
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
   function handleSubmit(e: React.SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
 
     if (isLogin) {
       onLogin(email, password);
@@ -24,7 +71,6 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
   return (
     <div className="flex h-screen w-full items-center justify-center bg-white">
       <div className="flex w-full max-w-md flex-col items-center px-6">
-        {/* Название мессенджера */}
         <h1 className="mb-12 text-4xl font-bold text-slate-900">
           SAS Messenger
         </h1>
@@ -58,6 +104,9 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
               required
             />
           )}
+          {nameError && (
+            <p className="text-red-500 text-xs mt-1">{nameError}</p>
+          )}
 
           <input
             type={isLogin ? "text" : "email"}
@@ -67,6 +116,9 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
             className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500"
             required
           />
+          {emailError && (
+            <p className="text-red-500 text-xs mt-1">{emailError}</p>
+          )}
 
           <input
             type="password"
@@ -76,6 +128,9 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
             className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500"
             required
           />
+          {passwordError && (
+            <p className="text-red-500 text-xs mt-1">{passwordError}</p>
+          )}
 
           <button
             type="submit"
