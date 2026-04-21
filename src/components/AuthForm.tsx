@@ -10,9 +10,73 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+  }>({});
+
+  function validateName(name: string): string | undefined {
+    if (!name.trim()) {
+      return "Логин обязателен для заполнения";
+    }
+    if (name.length < 3) {
+      return "Логин должен содержать минимум 3 символа";
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+      return "Логин может содержать только латинские буквы, цифры и подчеркивание";
+    }
+    return undefined;
+  }
+
+  function validateEmail(email: string): string | undefined {
+    if (!email.trim()) {
+      return "Email обязателен для заполнения";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return "Введите корректный email адрес";
+    }
+    return undefined;
+  }
+
+  function validatePassword(password: string): string | undefined {
+    if (!password) {
+      return "Пароль обязателен для заполнения";
+    }
+    if (password.length < 6) {
+      return "Пароль должен содержать минимум 6 символов";
+    }
+    return undefined;
+  }
 
   function handleSubmit(e: React.SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     e.preventDefault();
+    setErrors({});
+
+    const newErrors: { name?: string; email?: string; password?: string } = {};
+
+    if (!isLogin) {
+      const nameError = validateName(name);
+      if (nameError) {
+        newErrors.name = nameError;
+      }
+    }
+
+    const emailError = isLogin ? validateEmail(email) : validateEmail(email);
+    if (emailError) {
+      newErrors.email = emailError;
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      newErrors.password = passwordError;
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
     if (isLogin) {
       onLogin(email, password);
@@ -49,33 +113,51 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
         {/* Форма */}
         <form onSubmit={handleSubmit} className="w-full space-y-4">
           {!isLogin && (
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Логин"
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500"
-              required
-            />
+            <div className="space-y-1">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Логин"
+                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-blue-500 ${
+                  errors.name ? "border-red-500" : "border-slate-300"
+                }`}
+              />
+              {errors.name && (
+                <p className="text-xs text-red-500">{errors.name}</p>
+              )}
+            </div>
           )}
 
-          <input
-            type={isLogin ? "text" : "email"}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={isLogin ? "Логин или Email" : "Email"}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500"
-            required
-          />
+          <div className="space-y-1">
+            <input
+              type={isLogin ? "text" : "email"}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={isLogin ? "Логин или Email" : "Email"}
+              className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-blue-500 ${
+                errors.email ? "border-red-500" : "border-slate-300"
+              }`}
+            />
+            {errors.email && (
+              <p className="text-xs text-red-500">{errors.email}</p>
+            )}
+          </div>
 
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Пароль"
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500"
-            required
-          />
+          <div className="space-y-1">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Пароль"
+              className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-blue-500 ${
+                errors.password ? "border-red-500" : "border-slate-300"
+              }`}
+            />
+            {errors.password && (
+              <p className="text-xs text-red-500">{errors.password}</p>
+            )}
+          </div>
 
           <button
             type="submit"
