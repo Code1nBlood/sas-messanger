@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChatList } from "./components/ChatList";
 import { ChatWindow } from "./components/ChatWindow";
+import LeftPanel from "./components/LeftPanel";
 import { AuthForm } from "./components/AuthForm";
 import { mockChats } from "./data/mockChats";
 import { mockMessages } from "./data/mockMessages";
@@ -138,6 +139,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-slate-100 text-slate-900">
+      <LeftPanel />
       <ChatList
         chats={filteredChats}
         activeChatId={activeChatId}
