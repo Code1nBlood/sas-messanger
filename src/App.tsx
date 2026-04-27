@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ChatList } from "./components/ChatList";
 import { ChatWindow } from "./components/ChatWindow";
 import LeftPanel from "./components/LeftPanel";
+import { AccWindow } from "./components/AccWindow";
 import { AuthForm } from "./components/AuthForm";
 import { mockChats } from "./data/mockChats";
 import { mockMessages } from "./data/mockMessages";
@@ -18,6 +19,7 @@ export default function App() {
   const [searchVal, setSearchVal] = useState("");
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[] | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showAccountWindow, setShowAccountWindow] = useState(false);
 
   const filteredChats = useMemo (() => {
     const query = searchVal.trim().toLowerCase();
@@ -139,27 +141,34 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-slate-100 text-slate-900">
-      <LeftPanel />
-      <ChatList
-        chats={filteredChats}
-        activeChatId={activeChatId}
-        onSelectChat={handleSelectedChat}
-        onSearch={setSearchVal}
-        searchVal={searchVal}
+      <LeftPanel onOpenAccount={() => setShowAccountWindow(true)} />
+      <>
+        <ChatList
+          chats={filteredChats}
+          activeChatId={activeChatId}
+          onSelectChat={handleSelectedChat}
+          onSearch={setSearchVal}
+          searchVal={searchVal}
+        />
 
-      />
-
-      <ChatWindow
-        chat={activeChat}
-        messages={currentMessages}
-        inputValue={inputValue}
-        onInputChange={setInputValue}
-        onSendMessage={handleSendMessage}
-        onCloseChat={handleCloseChat}
-        onAttachFiles={handleAttachFiles}
-        pendingAttachments={pendingAttachments}
-        onRemoveAttachment={handleRemoveAttachment}
-      />
+        <ChatWindow
+          chat={activeChat}
+          messages={currentMessages}
+          inputValue={inputValue}
+          onInputChange={setInputValue}
+          onSendMessage={handleSendMessage}
+          onCloseChat={handleCloseChat}
+          onAttachFiles={handleAttachFiles}
+          pendingAttachments={pendingAttachments}
+          onRemoveAttachment={handleRemoveAttachment}
+        />
+      </>
+      {showAccountWindow && (
+        <AccWindow
+          currentUser={currentUser || { id: "mock", name: "Test", email: "test@example.com" }}
+          onCloseAccount={() => setShowAccountWindow(false)}
+        />
+      )}
     </div>
   );
 }

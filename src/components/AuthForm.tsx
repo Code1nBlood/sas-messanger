@@ -29,7 +29,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!isLogin) { // Registration: always validate email format
+    if (!isLogin) { 
       if (!emailRegex.test(email)) {
         setEmailError("Пожалуйста, введите корректный Email.");
         isValid = false;

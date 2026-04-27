@@ -9,7 +9,7 @@ export function Avatar({
     title,
     avatarUrl, 
     size = 'md', 
-    isOnline = false,
+    isOnline = true,
 }: AvatarProps) {
     const sizes = {
         sm: 'h-10 w-10',
