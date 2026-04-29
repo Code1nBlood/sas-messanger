@@ -1,4 +1,5 @@
-import React from 'react';
+import React from 'react';<MessageCircleMore />
+import { MessageCircleMore, UserCog } from "lucide-react";
 
 interface LeftPanelProps {
   onOpenAccount: () => void;
@@ -12,7 +13,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onOpenAccount }) => {
       <div className="grow">
         {/* Сверху */}
         <button className="w-full flex flex-col items-center justify-center p-2 rounded-md hover:bg-gray-700 text-sm mb-2">
-          <span className="text-xl">💬</span>
+          <MessageCircleMore />
           <span>Чаты</span>
         </button>
       </div>
@@ -21,7 +22,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onOpenAccount }) => {
       <nav className="p-2 border-t border-gray-700">
         
         <button className="w-full flex flex-col items-center justify-center p-2 rounded-md hover:bg-gray-700 text-sm" onClick={onOpenAccount}>
-          <span className="text-xl">👤</span>
+          <UserCog />
           <span>Аккаунт</span>
         </button>
       </nav>

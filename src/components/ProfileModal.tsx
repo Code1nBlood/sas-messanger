@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { User } from "../types/user";
 import { Avatar } from "./Avatar";
+import { X, PenLine } from "lucide-react";
 
 interface ProfileModalProps {
   currentUser: User;
   onClose: () => void;
-  onLogout: () => void; // Added onLogout prop
+  onLogout: () => void;
 }
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose, onLogout }) => {
@@ -36,7 +37,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-lg"
         >
-          &times;
+          <X />
         </button>
         <h2 className="text-2xl font-bold mb-6 text-center">Профиль</h2>
 
@@ -56,9 +57,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
               <span className="text-xl font-semibold">{identifier}</span>
             )}
             <button onClick={() => setIsEditingIdentifier(!isEditingIdentifier)} className="ml-2 p-1 text-blue-500 hover:text-blue-700">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.38-2.827-2.828z" />
-              </svg>
+              <PenLine />
             </button>
           </div>
         </div>
@@ -79,9 +78,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
               <span className="flex-1 ml-4 text-gray-800">{name || "Не указано"}</span>
             )}
             <button onClick={() => setIsEditingName(!isEditingName)} className="ml-2 p-1 text-blue-500 hover:text-blue-700">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.38-2.827-2.828z" />
-              </svg>
+              <PenLine />
             </button>
           </div>
 
@@ -100,9 +97,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
               <span className="flex-1 ml-4 text-gray-800">{surname || "Не указана"}</span>
             )}
             <button onClick={() => setIsEditingSurname(!isEditingSurname)} className="ml-2 p-1 text-blue-500 hover:text-blue-700">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.38-2.827-2.828z" />
-              </svg>
+              <PenLine />
             </button>
           </div>
 
@@ -121,9 +116,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
               <span className="flex-1 ml-4 text-gray-800">{about || "Расскажите о себе..."}</span>
             )}
             <button onClick={() => setIsEditingAbout(!isEditingAbout)} className="ml-2 p-1 text-blue-500 hover:text-blue-700">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.38-2.827-2.828z" />
-              </svg>
+              <PenLine />
             </button>
           </div>
         </div>
