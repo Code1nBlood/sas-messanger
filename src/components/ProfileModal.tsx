@@ -5,9 +5,10 @@ import { Avatar } from "./Avatar";
 interface ProfileModalProps {
   currentUser: User;
   onClose: () => void;
+  onLogout: () => void; // Added onLogout prop
 }
 
-export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose }) => {
+export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose, onLogout }) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingSurname, setIsEditingSurname] = useState(false);
   const [isEditingAbout, setIsEditingAbout] = useState(false);
@@ -126,6 +127,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
             </button>
           </div>
         </div>
+
+        {/* Кнопка выхода */}
+        <button
+          onClick={onLogout}
+          className="mt-6 w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          Выйти
+        </button>
       </div>
     </div>
   );
