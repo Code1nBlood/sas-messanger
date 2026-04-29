@@ -1,7 +1,38 @@
-# Tauri + React + Typescript
+# SAS Messenger 
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+<img width="1254" height="1254" alt="1777471169154-019dd986-d4cb-7770-b181-5f15a4f564c7" src="https://github.com/user-attachments/assets/220bd920-47d6-4038-94cb-7e9c8124c625" />
 
-## Recommended IDE Setup
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+Современный, легкий десктопный мессенджер, построенный на базе **Tauri v2** и **React**. Приложение сочетает в себе производительность и гибкость современного фронтенда.
+
+## 🛠 Стек технологий
+
+| | |
+|-|-|
+| **Tauri v2** | Кроссплатформенная среда выполнения |
+| **React + TS** | Библиотека интерфейса и строгая типизация |
+| **Tailwind CSS** | Утилитарная стилизация и адаптивная верстка |
+| **Lucide React** | Набор минималистичных иконок |
+| **Vite** | Сборка фронтенда |
+
+## ✨ Возможности программы
+
+- **💬 Управление чатами:** Интуитивно понятный список диалогов с предпросмотром последних сообщений.
+- **📎 Вложения:** Система отправки файлов и изображений с предварительным просмотром.
+- **😀 Emoji Picker:** Встроенная поддержка эмодзи.
+- **👤 Профили:** Настраиваемый профиль пользователя.
+- **⚡ Производительность:** Благодаря Tauri приложение потребляет в разы меньше оперативной памяти, чем аналоги на Electron.
+
+## 🚀 Быстрый старт
+
+### Предварительные требования
+Для сборки приложения понадобятся:
+1. **Node.js**
+2. **Rust** (https://rustup.rs/)
+
+### Установка и запуск
+
+1. **Клонируйте репозиторий**
+2. **Установите зависимости**: npm install
+3. **Запустите приложение в режиме разработки**: npm run tauri dev
+4. **Сборка**: npm run tauri build
