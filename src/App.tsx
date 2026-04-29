@@ -193,12 +193,13 @@ async function handleLogin(loginIdentifier: string, _password: string) {
       // Загрузка сообщений с сервера
       try {
         const messagesData = await authService.getChatMessages(chatIdNum);
+        console.log('First message date:', messagesData[0]?.date);
         const loadedMessages: Message[] = messagesData.map((m: any) => ({
           id: Date.now().toString() + Math.random(),
           chatId: chatId,
           sender: m.userName === currentUser?.name ? 'me' : 'other',
           text: m.value || '',
-          time: m.date ? new Date(m.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           attachments: m.fileUrl ? [{ id: Date.now().toString(), type: 'file', name: 'File', url: m.fileUrl }] : undefined
         }));
         setMessages(loadedMessages);
@@ -251,36 +252,20 @@ async function handleLogin(loginIdentifier: string, _password: string) {
     const chatIdNum = parseInt(activeChatId);
     if (isNaN(chatIdNum)) return;
 
-    // Отправляем сообщение через SignalR
-    signalRService.sendMessage(chatIdNum, text, undefined).catch(err => {
-      console.error('Send message failed', err);
-      alert('Ошибка отправки сообщения');
-      return;
-    });
+    // Просто отправляем — onNewMessage сам добавит сообщение
+    try {
+        await signalRService.sendMessage(chatIdNum, text, undefined);
+    } catch (err) {
+        console.error('Send message failed', err);
+        alert('Ошибка отправки сообщения');
+        return;
+    }
 
-    // Локально добавляем сообщение для мгновенного отображения
-    const allAttachments = attachments || pendingAttachments;
-    const newMessage: Message = {
-      id: generateMessageId(),
-      chatId: activeChatId,
-      sender: "me",
-      text,
-      time: getCurrentTime(),
-      attachments: allAttachments && allAttachments.length > 0 ? allAttachments : undefined,
-    };
-
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
-
-    const lastMessageText = text || (allAttachments && allAttachments.length > 0
-      ? allAttachments.length === 1
-        ? allAttachments[0].name
-        : `${allAttachments.length} вложений`
-      : "");
-
+    // Обновляем lastMessage в списке чатов
     setChats((prevChats) => prevChats.map((chat) =>
-      chat.id === activeChatId
-        ? {...chat, lastMessage: lastMessageText, isTyping: false}
-        : chat
+        chat.id === activeChatId
+            ? {...chat, lastMessage: text}
+            : chat
     ));
 
     setInputValue("");
