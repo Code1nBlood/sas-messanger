@@ -41,13 +41,25 @@ export const signalRService = {
     }
   },
 
+  isConnected: () => {
+    return connection?.state === signalR.HubConnectionState.Connected;
+  },
+
   joinChat: async (chatId: number) => {
     if (!connection) throw new Error('No connection');
+    if (!signalRService.isConnected()) {
+      console.error('SignalR not connected, current state:', connection?.state);
+      throw new Error('Connection not in Connected state');
+    }
     await connection.invoke('JoinChat', chatId);
   },
 
   sendMessage: async (chatId: number, message: string, fileUrl?: string) => {
     if (!connection) throw new Error('No connection');
+    if (!signalRService.isConnected()) {
+      console.error('SignalR not connected, current state:', connection?.state);
+      throw new Error('Connection not in Connected state');
+    }
     await connection.invoke('SendMessage', chatId, message, fileUrl ?? null);
   },
 

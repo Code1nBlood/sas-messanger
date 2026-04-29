@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { ChatList } from "./components/ChatList";
 import { ChatWindow } from "./components/ChatWindow";
 import LeftPanel from "./components/LeftPanel";
@@ -18,11 +18,17 @@ export default function App() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const activeChatIdRef = useRef(activeChatId); // актуальный id чата
   const [inputValue, setInputValue] = useState("");
   const [searchVal, setSearchVal] = useState("");
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[] | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAccountWindow, setShowAccountWindow] = useState(false);
+
+  // Обновляем ref при изменении activeChatId
+  useEffect(() => {
+    activeChatIdRef.current = activeChatId;
+  }, [activeChatId]);
 
   const loadChats = useCallback(async () => {
     try {
@@ -90,7 +96,7 @@ export default function App() {
     return messages.filter((message) => message.chatId === activeChatId);
   }, [messages, activeChatId]);
 
-  // Проверка токена при загрузке и загрузка чатов
+  // Проверка токена при загрузке, подключение SignalR и загрузка чатов
   useEffect(() => {
     const token = authService.getToken();
     if (token) {
@@ -103,20 +109,22 @@ export default function App() {
           // Загрузка чатов с сервера
           loadChats();
           
-          // Подключение SignalR (временно отключено для отладки)
-          // signalRService.connect(token).then(() => {
-          //   signalRService.onNewMessage((author, messageText) => {
-          //     if (!activeChatId) return;
-          //     const newMsg: Message = {
-          //       id: Date.now().toString(),
-          //       chatId: activeChatId,
-          //       sender: author === user.name ? 'me' : 'other',
-          //       text: messageText,
-          //       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          //     };
-          //     setMessages(prev => [...prev, newMsg]);
-          //   });
-          // }).catch(err => console.error('SignalR connection failed', err));
+          // Подключение SignalR
+          signalRService.connect(token).then(() => {
+            console.log('SignalR connected in useEffect');
+            signalRService.onNewMessage((author, messageText) => {
+              const currentChatId = activeChatIdRef.current;
+              if (!currentChatId) return;
+              const newMsg: Message = {
+                id: Date.now().toString(),
+                chatId: currentChatId,
+                sender: author === user.name ? 'me' : 'other',
+                text: messageText,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              };
+              setMessages(prev => [...prev, newMsg]);
+            });
+          }).catch(err => console.error('SignalR connection failed', err));
         } catch (e) {
           console.error("Ошибка чтения пользователя из localStorage", e);
           authService.logout(); 
@@ -139,19 +147,20 @@ async function handleLogin(loginIdentifier: string, _password: string) {
         // Загрузка чатов с сервера
         await loadChats();
 
-        // Подключение SignalR (временно отключено)
-        // await signalRService.connect(data.token);
-        // signalRService.onNewMessage((author, messageText) => {
-        //   if (!activeChatId) return;
-        //   const newMsg: Message = {
-        //     id: Date.now().toString(),
-        //     chatId: activeChatId,
-        //     sender: author === username ? 'me' : 'other',
-        //     text: messageText,
-        //     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        //   };
-        //   setMessages(prev => [...prev, newMsg]);
-        // });
+        // Подключение SignalR
+        await signalRService.connect(data.token);
+        signalRService.onNewMessage((author, messageText) => {
+          const currentChatId = activeChatIdRef.current;
+          if (!currentChatId) return;
+          const newMsg: Message = {
+            id: Date.now().toString(),
+            chatId: currentChatId,
+            sender: author === username ? 'me' : 'other',
+            text: messageText,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          };
+          setMessages(prev => [...prev, newMsg]);
+        });
       } catch (err: any) {
         alert(`Ошибка входа: ${err.message || 'Попробуйте позже.'}`);
       }
@@ -178,8 +187,8 @@ async function handleLogin(loginIdentifier: string, _password: string) {
     
     const chatIdNum = parseInt(chatId);
     if (!isNaN(chatIdNum)) {
-      // SignalR пока отключен, войти в чат позже
-      // signalRService.joinChat(chatIdNum).catch(err => console.error('Join chat failed', err));
+      // Вход в чат через SignalR
+      signalRService.joinChat(chatIdNum).catch(err => console.error('Join chat failed', err));
       
       // Загрузка сообщений с сервера
       try {

@@ -9,7 +9,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onOpenAccount }) => {
   return (
     <aside className="flex flex-col h-full w-20 bg-gray-800 text-white shadow-lg relative items-center justify-center'">
       {/* Самый верх */}
-      <img src="src/assets/Logo.png" alt="" 
+      <img src="/Logo.png" alt="" 
       className='w-15 h-15
       rounded-full'/>
       <div className="grow">
