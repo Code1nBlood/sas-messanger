@@ -7,9 +7,11 @@ interface LeftPanelProps {
 
 const LeftPanel: React.FC<LeftPanelProps> = ({ onOpenAccount }) => {
   return (
-    <aside className="flex flex-col h-full w-20 bg-gray-800 text-white shadow-lg relative">
+    <aside className="flex flex-col h-full w-20 bg-gray-800 text-white shadow-lg relative items-center justify-center'">
       {/* Самый верх */}
-      <span className = "justify-center flex p-2">Лого</span>
+      <img src="src/assets/Logo.png" alt="" 
+      className='w-15 h-15
+      rounded-full'/>
       <div className="grow">
         {/* Сверху */}
         <button className="w-full flex flex-col items-center justify-center p-2 rounded-md hover:bg-gray-700 text-sm mb-2">
