@@ -58,46 +58,35 @@ export default function App() {
     }
   }, []);
 
-  async function handleLogin(email: string, _password: string, token?: string) {
+  async function handleLogin(loginIdentifier: string, _password: string) {
+    if (loginIdentifier) {
+      try {
+        const data = await authService.login(loginIdentifier, _password);
+        const username = data.username ?? loginIdentifier.split("@")[0];
+        const emailFromData = data.email ?? (loginIdentifier.includes('@') ? loginIdentifier : '');
+        localStorage.setItem('currentUser', JSON.stringify({ id: "1", email: emailFromData, name: username } as User));
+        setCurrentUser({ id: "1", email: emailFromData, name: username });
+      } catch {
+        alert("Ошибка входа. Попробуйте позже.");
+      }
+    } else {
+      alert("Заполните логин и пароль");
+    }
+  }
+
+  async function handleRegister(name: string, email: string, _password: string) {
     if (email) {
       try {
-        let data: LoginResponse;
-        if (token) {
-          //  структура на основе email
-          data = { username: email.split("@")[0], email, token };
-        } else {
-          data = await authService.login(email, _password);
-        }
-        const username = data.username ?? data.email.split("@")[0];
+        const data = await authService.register(name, email, _password);
+        const username = data.username ?? name;
         const emailFromData = data.email ?? email;
         const t = data.token;
         if (t) localStorage.setItem(AUTH_TOKEN_KEY, t);
         localStorage.setItem('currentUser', JSON.stringify({ id: "1", email: emailFromData, name: username } as User));
         setCurrentUser({ id: "1", email: emailFromData, name: username });
       } catch {
-        // без бэкенда
-        const testToken = 'test-token';
-        localStorage.setItem(AUTH_TOKEN_KEY, testToken);
-        setCurrentUser({ id: '1', email, name: email.split('@')[0] });
+        alert("Ошибка регистрации. Попробуйте позже.");
       }
-    } else {
-      alert("Заполните email и пароль");
-    }
-  }
-
-  function handleRegister(name: string, email: string, _password: string) {
-    if (email) {
-      const user = {
-        id: "1",
-        email,
-        name: name || email.split("@")[0],
-      };
-
-      // запросить токен у бэкенда
-      handleLogin(email, _password);
-      
-      // сохрание юзера в localStorage для восстановления сессии
-      localStorage.setItem('currentUser', JSON.stringify(user));
     } else {
       alert("Заполните email и пароль");
     }
