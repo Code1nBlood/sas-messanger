@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { authService } from "../services/authService";
 
 type AuthFormProps = {
-  onLogin: (loginIdentifier: string, password: string) => void;
+  onLogin: (loginIdentifier: string, password: string, token?: string) => void;
   onRegister: (name: string, email: string, password: string) => void;
 };
 
@@ -61,8 +62,15 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
       return;
     }
 
+    // Получаем токен из localStorage
+    const token = authService.getToken();
+
     if (isLogin) {
-      onLogin(email, password);
+      if (token) {
+        onLogin(email, password, token);
+      } else {
+        onLogin(email, password);
+      }
     } else {
       onRegister(name, email, password);
     }

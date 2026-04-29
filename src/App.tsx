@@ -1,15 +1,17 @@
-import { useMemo, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChatList } from "./components/ChatList";
 import { ChatWindow } from "./components/ChatWindow";
 import LeftPanel from "./components/LeftPanel";
-import { AccWindow } from "./components/AccWindow";
+import { ProfileModal } from "./components/ProfileModal";
 import { AuthForm } from "./components/AuthForm";
 import { mockChats } from "./data/mockChats";
 import { mockMessages } from "./data/mockMessages";
-import type {Chat} from "./types/chat";
-import type {Message, Attachment} from "./types/message";
-import type {User} from "./types/user";
+import type{Chat}from"./types/chat";
+import type{Message, Attachment}from"./types/message";
+import type{User}from"./types/user";
 import { generateMessageId, getCurrentTime } from "./helpers/helpers";
+import { authService, AUTH_TOKEN_KEY } from "./services/authService";
+import type { LoginResponse } from "./services/authService";
 
 export default function App() {
   const [chats, setChats] = useState<Chat[]>(mockChats);
@@ -21,11 +23,11 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAccountWindow, setShowAccountWindow] = useState(false);
 
-  const filteredChats = useMemo (() => {
+  const filteredChats = useMemo(() => {
     const query = searchVal.trim().toLowerCase();
-
+    
     if (!query) return chats;
-
+    
     return chats.filter((chat) => chat.title.toLowerCase().includes(query));
   }, [chats, searchVal]);
 
@@ -37,13 +39,47 @@ export default function App() {
     return messages.filter((message) => message.chatId === activeChatId);
   }, [messages, activeChatId]);
 
-  function handleLogin(email: string, _password: string) {
+  // Проверка токена при загрузке 
+  useEffect(() => {
+    const token = authService.getToken();
+    if (token) {
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        try {
+          const user: User = JSON.parse(savedUser);
+          setCurrentUser(user);
+        } catch (e) {
+          console.error("Ошибка чтения пользователя из localStorage", e);
+          authService.logout(); 
+        }
+      } else {
+        authService.logout();
+      }
+    }
+  }, []);
+
+  async function handleLogin(email: string, _password: string, token?: string) {
     if (email) {
-      setCurrentUser({
-        id: "1",
-        email,
-        name: email.split("@")[0],
-      });
+      try {
+        let data: LoginResponse;
+        if (token) {
+          //  структура на основе email
+          data = { username: email.split("@")[0], email, token };
+        } else {
+          data = await authService.login(email, _password);
+        }
+        const username = data.username ?? data.email.split("@")[0];
+        const emailFromData = data.email ?? email;
+        const t = data.token;
+        if (t) localStorage.setItem(AUTH_TOKEN_KEY, t);
+        localStorage.setItem('currentUser', JSON.stringify({ id: "1", email: emailFromData, name: username } as User));
+        setCurrentUser({ id: "1", email: emailFromData, name: username });
+      } catch {
+        // без бэкенда
+        const testToken = 'test-token';
+        localStorage.setItem(AUTH_TOKEN_KEY, testToken);
+        setCurrentUser({ id: '1', email, name: email.split('@')[0] });
+      }
     } else {
       alert("Заполните email и пароль");
     }
@@ -51,11 +87,17 @@ export default function App() {
 
   function handleRegister(name: string, email: string, _password: string) {
     if (email) {
-      setCurrentUser({
+      const user = {
         id: "1",
         email,
         name: name || email.split("@")[0],
-      });
+      };
+
+      // запросить токен у бэкенда
+      handleLogin(email, _password);
+      
+      // сохрание юзера в localStorage для восстановления сессии
+      localStorage.setItem('currentUser', JSON.stringify(user));
     } else {
       alert("Заполните email и пароль");
     }
@@ -135,6 +177,15 @@ export default function App() {
     setPendingAttachments(null);
   }
 
+  function handleLogout() {
+    authService.logout();
+    
+    setCurrentUser(null);
+    setActiveChatId(null);
+    setInputValue("");
+    localStorage.removeItem('currentUser');
+  }
+
   if (!currentUser) {
     return <AuthForm onLogin={handleLogin} onRegister={handleRegister} />;
   }
@@ -164,9 +215,10 @@ export default function App() {
         />
       </>
       {showAccountWindow && (
-        <AccWindow
+        <ProfileModal
           currentUser={currentUser || { id: "mock", name: "Test", email: "test@example.com" }}
-          onCloseAccount={() => setShowAccountWindow(false)}
+          onClose={() => setShowAccountWindow(false)}
+          onLogout={handleLogout}
         />
       )}
     </div>
