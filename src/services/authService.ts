@@ -24,25 +24,27 @@ export const authService = {
       body: JSON.stringify({ login, password }),
     });
 
-    if (!response.ok) throw new Error('Login failed');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Login failed' }));
+      throw new Error(errorData.message || errorData.title || 'Login failed');
+    }
 
     const data: LoginResponse = await response.json();
     localStorage.setItem(AUTH_TOKEN_KEY, data.token);
     return data;
   },
 
-  register: async (username: string, email: string, password: string): Promise<LoginResponse> => {
+  register: async (username: string, email: string, password: string): Promise<void> => {
     const response = await fetch(`${BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, email, password }),
     });
 
-    if (!response.ok) throw new Error('Register failed');
-
-    const data: LoginResponse = await response.json();
-    localStorage.setItem(AUTH_TOKEN_KEY, data.token);
-    return data;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Register failed' }));
+      throw new Error(errorData.message || errorData.title || 'Register failed');
+    }
   },
 
   logout: () => {
@@ -57,14 +59,59 @@ export const authService = {
     return !!localStorage.getItem(AUTH_TOKEN_KEY);
   },
 
+  // Получение чатов
+  getChats: async () => {
+    const response = await authService.authFetch('/chats');
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`getChats failed: ${response.status} ${response.statusText}`, errorText);
+      throw new Error(`Failed to load chats: ${response.status} ${errorText}`);
+    }
+    const data = await response.json();
+    console.log('getChats response:', data);
+    return data;
+  },
+
+  // Получение сообщений чата
+  getChatMessages: async (chatId: number) => {
+    const response = await authService.authFetch(`/chats/${chatId}/messages`);
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`getChatMessages failed: ${response.status} ${response.statusText}`, errorText);
+      throw new Error(`Failed to load messages: ${response.status} ${errorText}`);
+    }
+    const data = await response.json();
+    console.log('getChatMessages response:', data);
+    return data;
+  },
+
+  // Создание чата
+  createChat: async (name: string, participantIds: number[]) => {
+    const response = await authService.authFetch('/chats/create', {
+      method: 'POST',
+      body: JSON.stringify({ name, participants: participantIds, avatarUrl: null }),
+    });
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`createChat failed: ${response.status} ${response.statusText}`, errorText);
+      throw new Error(`Failed to create chat: ${response.status} ${errorText}`);
+    }
+    return response.json();
+  },
+
   // Метод для защищенных запросов с токеном
   authFetch: async (url: string, options: RequestInit = {}) => {
-    return fetch(`${BASE_URL}${url}`, {
+    const fullUrl = `${BASE_URL}${url}`;
+    const headers = {
+      ...getAuthHeaders(),
+      ...options.headers,
+    };
+    console.log(`authFetch: ${options.method || 'GET'} ${fullUrl}`, 'Headers:', headers);
+    const response = await fetch(fullUrl, {
       ...options,
-      headers: {
-        ...getAuthHeaders(),
-        ...options.headers,
-      },
+      headers,
     });
+    console.log(`authFetch response: ${response.status} ${response.statusText}`);
+    return response;
   },
 };
