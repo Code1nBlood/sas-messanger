@@ -66,6 +66,7 @@ export const signalRService = {
   onNewMessage: (callback: (author: string, message: string) => void) => {
     if (!connection) return;
     connection.on('NewMessage', callback);
+    
   },
 
   offNewMessage: (callback: (author: string, message: string) => void) => {

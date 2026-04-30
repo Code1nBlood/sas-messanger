@@ -40,7 +40,7 @@ export default function App() {
       const loadedChats: Chat[] = chatsData.map((c: any) => {
         console.log('Processing chat item:', c);
         return {
-          id: (c.Id ?? c.id)?.toString() || '', // учитываем PascalCase от .NET
+          id: (c.Id ?? c.id)?.toString() || '', // регистры на всякий
           title: c.Name || c.name || 'Untitled Chat',
           lastMessage: c.LastMessage?.Value || c.lastMessage?.value || '',
           avatarUrl: c.AvatarUrl ?? c.avatarUrl ?? undefined,
@@ -56,7 +56,7 @@ export default function App() {
     }
   }, []);
 
-  // Временная функция для создания тестового чата
+  // функция для создания тестового чата
   async function handleCreateTestChat() {
     const chatName = prompt('Введите название чата:', 'Тестовый чат');
     if (!chatName) return;
@@ -106,7 +106,6 @@ export default function App() {
           const user: User = JSON.parse(savedUser);
           setCurrentUser(user);
           
-          // Загрузка чатов с сервера
           loadChats();
           
           // Подключение SignalR
@@ -182,24 +181,34 @@ async function handleLogin(loginIdentifier: string, _password: string) {
     }
   }
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+
   async function handleSelectedChat(chatId: string){
     setActiveChatId(chatId);
+    setCurrentPage(1);
+    setHasMoreMessages(true);
     
     const chatIdNum = parseInt(chatId);
     if (!isNaN(chatIdNum)) {
       // Вход в чат через SignalR
       signalRService.joinChat(chatIdNum).catch(err => console.error('Join chat failed', err));
       
-      // Загрузка сообщений с сервера
+      // Загрузка сообщений с сервера (первая страница)
       try {
-        const messagesData = await authService.getChatMessages(chatIdNum);
-        console.log('First message date:', messagesData[0]?.date);
-        const loadedMessages: Message[] = messagesData.map((m: any) => ({
-          id: Date.now().toString() + Math.random(),
+        const messagesData = await authService.getChatMessages(chatIdNum, 1, 20);
+        console.log('Loaded messages page 1:', messagesData);
+        
+        if (messagesData.length < 20) {
+          setHasMoreMessages(false);
+        }
+
+        const loadedMessages: Message[] = messagesData.reverse().map((m: any) => ({
+          id: (m.id || m.Id || (Date.now().toString() + Math.random())).toString(),
           chatId: chatId,
           sender: m.userName === currentUser?.name ? 'me' : 'other',
           text: m.value || '',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          time: new Date(m.date || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           attachments: m.fileUrl ? [{ id: Date.now().toString(), type: 'file', name: 'File', url: m.fileUrl }] : undefined
         }));
         setMessages(loadedMessages);
@@ -210,6 +219,39 @@ async function handleLogin(loginIdentifier: string, _password: string) {
     
     setChats((prevChats) => prevChats.map((chat) => chat.id === chatId ?{...chat, unreadCount: 0}: chat));
   }
+
+const isLoadingMoreRef = useRef(false);
+
+const loadMoreMessages = useCallback(async () => {
+  if (!activeChatId || !hasMoreMessages) return;
+  if (isLoadingMoreRef.current) return;   // ← защита
+  isLoadingMoreRef.current = true;
+
+  const chatIdNum = parseInt(activeChatId);
+  if (isNaN(chatIdNum)) return;
+
+  const nextPage = currentPage + 1;
+  try {
+    const messagesData = await authService.getChatMessages(chatIdNum, nextPage, 20);
+    if (messagesData.length < 20) setHasMoreMessages(false);
+    if (messagesData.length > 0) {
+      const olderMessages: Message[] = messagesData.reverse().map((m: any) => ({
+        id: (m.id || m.Id || (Date.now().toString() + Math.random())).toString(),
+        chatId: activeChatId,
+        sender: m.userName === currentUser?.name ? 'me' : 'other',
+        text: m.value || '',
+        time: new Date(m.date || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        attachments: m.fileUrl ? [{ id: Date.now().toString(), type: 'file', name: 'File', url: m.fileUrl }] : undefined
+      }));
+      setMessages(prev => [...olderMessages, ...prev]);
+      setCurrentPage(nextPage);
+    }
+  } catch (err: any) {
+    console.error('Failed to load more messages', err);
+  } finally {
+    isLoadingMoreRef.current = false;   
+  }
+}, [activeChatId, currentPage, hasMoreMessages, currentUser]);
 
   function handleCloseChat() {
     setActiveChatId(null);
@@ -252,7 +294,6 @@ async function handleLogin(loginIdentifier: string, _password: string) {
     const chatIdNum = parseInt(activeChatId);
     if (isNaN(chatIdNum)) return;
 
-    // Просто отправляем — onNewMessage сам добавит сообщение
     try {
         await signalRService.sendMessage(chatIdNum, text, undefined);
     } catch (err) {
@@ -261,7 +302,6 @@ async function handleLogin(loginIdentifier: string, _password: string) {
         return;
     }
 
-    // Обновляем lastMessage в списке чатов
     setChats((prevChats) => prevChats.map((chat) =>
         chat.id === activeChatId
             ? {...chat, lastMessage: text}
@@ -316,6 +356,9 @@ async function handleLogin(loginIdentifier: string, _password: string) {
           onAttachFiles={handleAttachFiles}
           pendingAttachments={pendingAttachments}
           onRemoveAttachment={handleRemoveAttachment}
+          onLoadMore={loadMoreMessages}
+          hasMore={hasMoreMessages}
+          activeChatId={activeChatId}
         />
       </>
       {showAccountWindow && (

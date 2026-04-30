@@ -73,8 +73,8 @@ export const authService = {
   },
 
   // Получение сообщений чата
-  getChatMessages: async (chatId: number) => {
-    const response = await authService.authFetch(`/chats/${chatId}/messages`);
+  getChatMessages: async (chatId: number, page: number = 1, pageSize: number = 20) => {
+    const response = await authService.authFetch(`/chats/${chatId}/messages?page=${page}&pageSize=${pageSize}`);
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');
       console.error(`getChatMessages failed: ${response.status} ${response.statusText}`, errorText);
