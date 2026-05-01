@@ -7,7 +7,7 @@ import { AuthForm } from "./components/AuthForm";
 import type{Chat}from"./types/chat";
 import type{Message, Attachment}from"./types/message";
 import type{User}from"./types/user";
-import { generateMessageId, getCurrentTime } from "./helpers/helpers";
+import { generateMessageId, getCurrentTime, formatMessageTime } from "./helpers/helpers";
 import { authService, AUTH_TOKEN_KEY } from "./services/authService";
 import type { LoginResponse } from "./services/authService";
 import { signalRService } from "./services/signalRService";
@@ -119,7 +119,7 @@ export default function App() {
                 chatId: currentChatId,
                 sender: author === user.name ? 'me' : 'other',
                 text: messageText,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                time: getCurrentTime(),
               };
               setMessages(prev => [...prev, newMsg]);
             });
@@ -208,7 +208,7 @@ async function handleLogin(loginIdentifier: string, _password: string) {
           chatId: chatId,
           sender: m.userName === currentUser?.name ? 'me' : 'other',
           text: m.value || '',
-          time: new Date(m.date || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          time: formatMessageTime(m.date ?? m.Date),
           attachments: m.fileUrl ? [{ id: Date.now().toString(), type: 'file', name: 'File', url: m.fileUrl }] : undefined
         }));
         setMessages(loadedMessages);
