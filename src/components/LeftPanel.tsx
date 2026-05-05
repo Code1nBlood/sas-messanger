@@ -1,5 +1,6 @@
-import React from 'react';<MessageCircleMore />
-import { MessageCircleMore, UserCog } from "lucide-react";
+import React from "react";
+<MessageCircleMore />;
+import { MessageCircleMore, UserCog, Contact } from "lucide-react";
 
 interface LeftPanelProps {
   onOpenAccount: () => void;
@@ -9,10 +10,13 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onOpenAccount }) => {
   return (
     <aside className="flex flex-col h-full w-20 bg-gray-800 text-white shadow-lg relative items-center justify-center'">
       {/* Самый верх */}
-      <img src="/Logo.png" alt="" 
-      className='w-15 h-15
-      rounded-full'/>
-      <div className="grow">
+      <img
+        src="/Logo.png"
+        alt=""
+        className="w-15 h-15
+      rounded-full"
+      />
+      <div className="">
         {/* Сверху */}
         <button className="w-full flex flex-col items-center justify-center p-2 rounded-md hover:bg-gray-700 text-sm mb-2">
           <MessageCircleMore />
@@ -20,10 +24,20 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onOpenAccount }) => {
         </button>
       </div>
 
+      <div className="">
+        {/* Сверху */}
+        <button className="w-full flex flex-col items-center justify-center p-2 rounded-md hover:bg-gray-700 text-sm mb-2">
+          <Contact />
+          <span>Друзья</span>
+        </button>
+      </div>
+
       {/* Снизу */}
       <nav className="p-2 border-t border-gray-700">
-        
-        <button className="w-full flex flex-col items-center justify-center p-2 rounded-md hover:bg-gray-700 text-sm" onClick={onOpenAccount}>
+        <button
+          className="w-full flex flex-col items-center justify-center p-2 rounded-md hover:bg-gray-700 text-sm"
+          onClick={onOpenAccount}
+        >
           <UserCog />
           <span>Аккаунт</span>
         </button>
