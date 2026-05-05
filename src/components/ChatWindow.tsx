@@ -15,6 +15,9 @@ type ChatWindowProps = {
   onAttachFiles: (files: FileList) => void;
   pendingAttachments: Attachment[] | null;
   onRemoveAttachment: (id: string) => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  activeChatId?: string | null;
 };
 
 export function ChatWindow({
@@ -27,6 +30,9 @@ export function ChatWindow({
   onAttachFiles,
   pendingAttachments,
   onRemoveAttachment,
+  onLoadMore,
+  hasMore,
+  activeChatId,
 }: ChatWindowProps) {
   if (!chat) {
     return (
@@ -38,7 +44,7 @@ export function ChatWindow({
     <section className="flex flex-1 flex-col bg-slate-50">
       <ChatHeader chat={chat} onCloseChat={onCloseChat} />
 
-      <MessageList messages={messages} />
+      <MessageList messages={messages} onLoadMore={onLoadMore} hasMore={hasMore} activeChatId={activeChatId} />
 
       <MessageInput
         value={inputValue}

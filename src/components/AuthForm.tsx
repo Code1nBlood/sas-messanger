@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { authService } from "../services/authService";
 import { User } from "lucide-react";
 
 type AuthFormProps = {
-  onLogin: (loginIdentifier: string, password: string, token?: string) => void;
+  onLogin: (loginIdentifier: string, password: string) => void;
   onRegister: (name: string, email: string, password: string) => void;
 };
 
@@ -63,15 +62,8 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
       return;
     }
 
-    // Получаем токен из localStorage
-    const token = authService.getToken();
-
     if (isLogin) {
-      if (token) {
-        onLogin(email, password, token);
-      } else {
-        onLogin(email, password);
-      }
+      onLogin(email, password);
     } else {
       onRegister(name, email, password);
     }
