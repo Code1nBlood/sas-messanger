@@ -16,6 +16,7 @@ import {
 import { authService, AUTH_TOKEN_KEY } from "./services/authService";
 import type { LoginResponse } from "./services/authService";
 import { signalRService } from "./services/signalRService";
+import { isMockMode, setMockMode } from "./services/config";
 
 export default function App() {
   // const [chats, setChats] = useState<Chat[]>(mockChats); // Mock disabled
@@ -415,12 +416,24 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-100 text-slate-900">
-      <LeftPanel
-        onOpenAccount={() => onSelectPanelTab("account")}
-        activePanelTab={activePanelTab}
-        onSelectPanelTab={onSelectPanelTab}
-      />
+    <div className="flex h-screen bg-slate-100 text-slate-900 flex-col">
+      {isMockMode() && (
+        <div className="bg-amber-100 border-b border-amber-200 px-4 py-1 text-xs text-amber-800 flex justify-between items-center">
+          <span>⚠️ Работа в <b>MOCK</b> режиме (сервер не используется)</span>
+          <button 
+            onClick={() => setMockMode(false)}
+            className="underline font-bold hover:text-amber-600"
+          >
+            Переключиться на реальный сервер
+          </button>
+        </div>
+      )}
+      <div className="flex flex-1 overflow-hidden">
+        <LeftPanel
+          onOpenAccount={() => onSelectPanelTab("account")}
+          activePanelTab={activePanelTab}
+          onSelectPanelTab={onSelectPanelTab}
+        />
       {activePanelTab === "chats" && (
         <>
           <div className="p-2 border-b border-slate-200">
@@ -469,6 +482,7 @@ export default function App() {
           onLogout={handleLogout}
         />
       )}
+      </div>
     </div>
   );
 }

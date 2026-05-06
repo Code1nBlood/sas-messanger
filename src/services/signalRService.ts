@@ -1,4 +1,5 @@
 import * as signalR from '@microsoft/signalr';
+import { isMockMode } from './config';
 
 const HUB_URL = 'http://26.65.128.174:5164/chat';
 
@@ -6,6 +7,10 @@ let connection: signalR.HubConnection | null = null;
 
 export const signalRService = {
   connect: async (token: string) => {
+    if (isMockMode()) {
+      console.log('SignalR running in MOCK mode');
+      return null;
+    }
     if (connection) {
       await connection.stop();
     }
@@ -42,10 +47,12 @@ export const signalRService = {
   },
 
   isConnected: () => {
+    if (isMockMode()) return true;
     return connection?.state === signalR.HubConnectionState.Connected;
   },
 
   joinChat: async (chatId: number) => {
+    if (isMockMode()) return;
     if (!connection) throw new Error('No connection');
     if (!signalRService.isConnected()) {
       console.error('SignalR not connected, current state:', connection?.state);
@@ -55,6 +62,10 @@ export const signalRService = {
   },
 
   sendMessage: async (chatId: number, message: string, fileUrl?: string) => {
+    if (isMockMode()) {
+        console.log(`Mock SignalR: Sending message to chat ${chatId}: ${message}`);
+        return;
+    }
     if (!connection) throw new Error('No connection');
     if (!signalRService.isConnected()) {
       console.error('SignalR not connected, current state:', connection?.state);

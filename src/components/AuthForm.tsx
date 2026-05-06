@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { User } from "lucide-react";
+import { User, Database, DatabaseZap } from "lucide-react";
+import { isMockMode, setMockMode } from "../services/config";
 
 type AuthFormProps = {
   onLogin: (loginIdentifier: string, password: string) => void;
@@ -30,18 +31,20 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!isLogin) { 
+    if (!isLogin) {
       if (!emailRegex.test(email)) {
         setEmailError("Пожалуйста, введите корректный Email.");
         isValid = false;
       }
-    } else { // при login валидация
-      if (email.includes('@')) { // если есть собакен
+    } else {
+      // при login валидация
+      if (email.includes("@")) {
+        // если есть собакен
         if (!emailRegex.test(email)) {
           setEmailError("Пожалуйста, введите корректный Email.");
           isValid = false;
         }
-      } else if (email.trim() === "") { 
+      } else if (email.trim() === "") {
         setEmailError("Пожалуйста, введите логин или Email.");
         isValid = false;
       }
@@ -78,7 +81,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
 
         {/* Иконка пользователя */}
         <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100">
-          <User className="h-12 w-12"/>
+          <User className="h-12 w-12" />
         </div>
 
         {/* Форма */}
@@ -127,6 +130,23 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
           >
             {isLogin ? "Войти" : "Зарегистрироваться"}
           </button>
+
+          {isLogin && (
+            <button
+              type="button"
+              onClick={async () => {
+                setMockMode(true);
+                // задержка чтобы localStorage обновился
+                setTimeout(() => {
+                  onLogin("Admin", "password");
+                }, 10);
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-semibold text-white transition hover:bg-amber-600"
+            >
+              <DatabaseZap size={18} />
+              Войти через Mock (без сервера)
+            </button>
+          )}
         </form>
 
         {/* вход/регистрация */}
@@ -134,7 +154,9 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
           onClick={() => setIsLogin(!isLogin)}
           className="mt-4 text-sm text-slate-500 transition hover:text-slate-700"
         >
-          {isLogin ? "Нет аккаунта? Зарегистрироваться" : "Уже есть аккаунт? Войти"}
+          {isLogin
+            ? "Нет аккаунта? Зарегистрироваться"
+            : "Уже есть аккаунт? Войти"}
         </button>
 
         {/* Разделитель */}

@@ -1,3 +1,6 @@
+import { isMockMode } from './config';
+import { mockApiService } from './mockService';
+
 export const AUTH_TOKEN_KEY = 'authToken';
 
 export type LoginResponse = {
@@ -18,6 +21,11 @@ const getAuthHeaders = (): HeadersInit => {
 
 export const authService = {
   login: async (login: string, password: string): Promise<LoginResponse> => {
+    if (isMockMode()) {
+      const data = await mockApiService.login(login);
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      return data;
+    }
     const response = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -61,6 +69,7 @@ export const authService = {
 
   // Получение чатов
   getChats: async () => {
+    if (isMockMode()) return mockApiService.getChats();
     const response = await authService.authFetch('/chats');
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');
@@ -74,6 +83,7 @@ export const authService = {
 
   // Получение сообщений чата
   getChatMessages: async (chatId: number, page: number = 1, pageSize: number = 20) => {
+    if (isMockMode()) return mockApiService.getChatMessages(chatId);
     const response = await authService.authFetch(`/chats/${chatId}/messages?page=${page}&pageSize=${pageSize}`);
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');
