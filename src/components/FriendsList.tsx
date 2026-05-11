@@ -3,18 +3,12 @@ import { authService } from "../services/authService";
 
 type Friend = {
   id: number;
-  userId: number;
-  friendId: number;
-  status: string;
-  friend?: {
-    id: number;
-    username: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl: string;
-    lastSeen: Date;
-    isOnline: boolean;
-  };
+  username: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string;
+  lastSeen: Date;
+  isOnline: boolean;
 };
 
 const formatLastSeen = (date: Date, isOnline: boolean): string => {
@@ -76,7 +70,7 @@ const ConfirmModal: React.FC<{
   );
 };
 
-const FriendsList: React.FC<{ currentUserId: string }> = ({ currentUserId }) => {
+const FriendsList: React.FC = () => {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [search, setSearch] = useState("");
   const [onlineOnly, setOnlineOnly] = useState(false);
@@ -88,28 +82,16 @@ const FriendsList: React.FC<{ currentUserId: string }> = ({ currentUserId }) => 
       try {
         const data = await authService.getFriends();
         console.log('Friends API response:', JSON.stringify(data, null, 2));
-        const currentId = parseInt(currentUserId);
-        const friendsWithUsers = data.map((item: any) => {
-          // Определяем, кто из user/friend является собеседником (не текущим пользователем)
-          const otherUser =
-            item.userId === currentId ? item.friend : item.user;
-          return {
-            id: item.id,
-            userId: item.userId,
-            friendId: item.friendId,
-            status: item.status,
-            friend: {
-              id: otherUser?.id,
-              username: otherUser?.username || "unknown",
-              firstName: otherUser?.firstName || otherUser?.username || "",
-              lastName: otherUser?.lastName || otherUser?.surname || "",
-              avatarUrl: otherUser?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser?.username || "User")}&background=3b82f6&color=fff&size=40`,
-              lastSeen: new Date(),
-              isOnline: false,
-            },
-          };
-        });
-        setFriends(friendsWithUsers);
+        const mapped: Friend[] = (data.friends || []).map((item: any) => ({
+          id: item.id,
+          username: item.username || "unknown",
+          firstName: item.firstName || item.username || "",
+          lastName: item.lastName || item.surname || "",
+          avatarUrl: item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.username || "User")}&background=3b82f6&color=fff&size=40`,
+          lastSeen: new Date(),
+          isOnline: false,
+        }));
+        setFriends(mapped);
       } catch (error) {
         console.error("Failed to load friends:", error);
       }
@@ -139,21 +121,19 @@ const FriendsList: React.FC<{ currentUserId: string }> = ({ currentUserId }) => 
   const filteredFriends = useMemo(() => {
     return friends
       .filter((friend) => {
-        if (!friend.friend) return false;
-
         const query = search.toLowerCase();
         const fullName =
-          `${friend.friend.firstName} ${friend.friend.lastName}`.toLowerCase();
+          `${friend.firstName} ${friend.lastName}`.toLowerCase();
         return (
-          friend.friend.username.toLowerCase().includes(query) ||
+          friend.username.toLowerCase().includes(query) ||
           fullName.includes(query)
         );
       })
-      .filter((friend) => (onlineOnly ? friend.friend?.isOnline : true))
+      .filter((friend) => (onlineOnly ? friend.isOnline : true))
       .sort(
         (a, b) =>
-          (b.friend?.lastSeen?.getTime?.() || 0) -
-          (a.friend?.lastSeen?.getTime?.() || 0),
+          (b.lastSeen?.getTime?.() || 0) -
+          (a.lastSeen?.getTime?.() || 0),
       );
   }, [friends, search, onlineOnly]);
 
@@ -215,21 +195,21 @@ const FriendsList: React.FC<{ currentUserId: string }> = ({ currentUserId }) => 
                         <div className="flex items-center gap-3">
                           <div className="relative">
                             <img
-                              src={friend.friend?.avatarUrl}
-                              alt={friend.friend?.username}
+                              src={friend.avatarUrl}
+                              alt={friend.username}
                               className="w-10 h-10 rounded-full object-cover"
                             />
-                            {friend.friend?.isOnline && (
+                            {friend.isOnline && (
                               <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
                             )}
                           </div>
                           <div>
                             <div className="font-medium text-gray-900">
-                              {friend.friend?.firstName}{" "}
-                              {friend.friend?.lastName}
+                              {friend.firstName}{" "}
+                              {friend.lastName}
                             </div>
                             <div className="text-sm text-gray-500">
-                              @{friend.friend?.username}
+                              @{friend.username}
                             </div>
                           </div>
                         </div>
@@ -237,14 +217,14 @@ const FriendsList: React.FC<{ currentUserId: string }> = ({ currentUserId }) => 
                       <td className="px-4 py-3 text-sm text-gray-600">
                         <span
                           className={
-                            friend.friend?.isOnline
+                            friend.isOnline
                               ? "text-green-600 font-medium"
                               : ""
                           }
                         >
                           {formatLastSeen(
-                            friend.friend?.lastSeen || new Date(),
-                            friend.friend?.isOnline || false,
+                            friend.lastSeen || new Date(),
+                            friend.isOnline || false,
                           )}
                         </span>
                       </td>
@@ -273,7 +253,7 @@ const FriendsList: React.FC<{ currentUserId: string }> = ({ currentUserId }) => 
         isOpen={modalOpen}
         userName={
           friendToDelete
-            ? `${friendToDelete.friend?.firstName} ${friendToDelete?.friend?.lastName}`
+            ? `${friendToDelete.firstName} ${friendToDelete?.lastName}`
             : ""
         }
         onConfirm={confirmDelete}

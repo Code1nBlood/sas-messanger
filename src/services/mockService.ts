@@ -46,47 +46,30 @@ export const mockApiService = {
 
   getFriends: async () => {
     await sleep(300);
-    return [
-      {
-        id: 1,
-        userId: 8,
-        friendId: 4,
-        status: "Accepted",
-        user: {
-          id: 8,
-          username: "current_user",
-          email: "user@example.com",
+    return {
+      user: {
+        id: 8,
+        username: "yaio2",
+        email: "soska23@mail.ru",
+        surname: null,
+        avatarUrl: null,
+      },
+      friends: [
+        {
+          id: 4,
+          username: "qweqwd",
+          email: "312@mail.ru",
           surname: null,
-          avatarUrl: null,
-        },
-          friend: {
-            id: 4,
-            username: "alex_dev",
-            email: "alex@example.com",
-            surname: "Иванов",
-            avatarUrl: null,
-          },
+          avatarUrl: "https://i.pinimg.com/736x/e7/9b/d4/e79bd437b8aaceb773f0a7fe343b4709.jpg",
         },
         {
-          id: 2,
-          userId: 8,
-          friendId: 5,
-          status: "Accepted",
-          user: {
-            id: 8,
-            username: "current_user",
-            email: "user@example.com",
-            surname: null,
-            avatarUrl: null,
-          },
-          friend: {
-            id: 5,
-            username: "maria_k",
-            email: "maria@example.com",
-            surname: "Козлова",
-            avatarUrl: null,
-          },
-      },
-    ];
+          id: 5,
+          username: "maria_k",
+          email: "maria@example.com",
+          surname: "Козлова",
+          avatarUrl: null,
+        },
+      ],
+    };
   }
 };

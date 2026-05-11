@@ -473,7 +473,7 @@ export default function App() {
           />
         </>
       )}
-      {activePanelTab === "friends" && <FriendsList currentUserId={currentUser.id} />}
+      {activePanelTab === "friends" && <FriendsList />}
       {activePanelTab === "account" && (
         <ProfileModal
           currentUser={
