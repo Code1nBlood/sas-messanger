@@ -4,9 +4,11 @@ import { mockApiService } from './mockService';
 export const AUTH_TOKEN_KEY = 'authToken';
 
 export type LoginResponse = {
+  id?: number;
   username: string;
   email: string;
   token: string;
+  avatarUrl?: string | null;
 };
 
 const BASE_URL = 'http://26.65.128.174:5164';
@@ -105,6 +107,18 @@ export const authService = {
       const errorText = await response.text().catch(() => 'Unknown error');
       console.error(`createChat failed: ${response.status} ${response.statusText}`, errorText);
       throw new Error(`Failed to create chat: ${response.status} ${errorText}`);
+    }
+    return response.json();
+  },
+
+  // Получение списка друзей
+  getFriends: async () => {
+    if (isMockMode()) return mockApiService.getFriends();
+    const response = await authService.authFetch('/friends');
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`getFriends failed: ${response.status} ${response.statusText}`, errorText);
+      throw new Error(`Failed to load friends: ${response.status} ${errorText}`);
     }
     return response.json();
   },

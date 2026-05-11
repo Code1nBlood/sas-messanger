@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, UIEvent, useLayoutEffect } from "react";
+import { useEffect, useRef, UIEvent, useLayoutEffect } from "react";
 import type { Message } from "../types/message";
 import { MessageBubble } from "./MessageBubble";
 

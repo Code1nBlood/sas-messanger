@@ -1,53 +1,21 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { authService } from "../services/authService";
 
-type User = {
+type Friend = {
   id: number;
-  username: string;
-  firstName: string;
-  lastName: string;
-  avatarUrl: string;
-  lastSeen: Date;
-  isOnline: boolean;
+  userId: number;
+  friendId: number;
+  status: string;
+  friend?: {
+    id: number;
+    username: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl: string;
+    lastSeen: Date;
+    isOnline: boolean;
+  };
 };
-
-const MOCK_USERS: User[] = [
-  {
-    id: 1,
-    username: "alex_dev",
-    firstName: "Алексей",
-    lastName: "Иванов",
-    avatarUrl: "https://i.pravatar.cc/40?img=1",
-    lastSeen: new Date(),
-    isOnline: true,
-  },
-  {
-    id: 2,
-    username: "maria_k",
-    firstName: "Мария",
-    lastName: "Козлова",
-    avatarUrl: "https://i.pravatar.cc/40?img=2",
-    lastSeen: new Date(Date.now() - 1000 * 60 * 15),
-    isOnline: false,
-  },
-  {
-    id: 3,
-    username: "ivan_p",
-    firstName: "Иван",
-    lastName: "Петров",
-    avatarUrl: "https://i.pravatar.cc/40?img=3",
-    lastSeen: new Date(Date.now() - 1000 * 60 * 60 * 3),
-    isOnline: false,
-  },
-  {
-    id: 4,
-    username: "kate_ui",
-    firstName: "Катя",
-    lastName: "Смирнова",
-    avatarUrl: "https://i.pravatar.cc/40?img=4",
-    lastSeen: new Date(),
-    isOnline: true,
-  },
-];
 
 const formatLastSeen = (date: Date, isOnline: boolean): string => {
   if (isOnline) return "В сети";
@@ -108,45 +76,86 @@ const ConfirmModal: React.FC<{
   );
 };
 
-const FriendsList: React.FC = () => {
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+const FriendsList: React.FC<{ currentUserId: string }> = ({ currentUserId }) => {
+  const [friends, setFriends] = useState<Friend[]>([]);
   const [search, setSearch] = useState("");
   const [onlineOnly, setOnlineOnly] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [friendToDelete, setFriendToDelete] = useState<Friend | null>(null);
 
-  const openDeleteModal = (user: User) => {
-    setUserToDelete(user);
+  useEffect(() => {
+    const loadFriends = async () => {
+      try {
+        const data = await authService.getFriends();
+        console.log('Friends API response:', JSON.stringify(data, null, 2));
+        const currentId = parseInt(currentUserId);
+        const friendsWithUsers = data.map((item: any) => {
+          // Определяем, кто из user/friend является собеседником (не текущим пользователем)
+          const otherUser =
+            item.userId === currentId ? item.friend : item.user;
+          return {
+            id: item.id,
+            userId: item.userId,
+            friendId: item.friendId,
+            status: item.status,
+            friend: {
+              id: otherUser?.id,
+              username: otherUser?.username || "unknown",
+              firstName: otherUser?.firstName || otherUser?.username || "",
+              lastName: otherUser?.lastName || otherUser?.surname || "",
+              avatarUrl: otherUser?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser?.username || "User")}&background=3b82f6&color=fff&size=40`,
+              lastSeen: new Date(),
+              isOnline: false,
+            },
+          };
+        });
+        setFriends(friendsWithUsers);
+      } catch (error) {
+        console.error("Failed to load friends:", error);
+      }
+    };
+
+    loadFriends();
+  }, []);
+
+  const openDeleteModal = (friend: Friend) => {
+    setFriendToDelete(friend);
     setModalOpen(true);
   };
 
   const confirmDelete = () => {
-    if (userToDelete) {
-      setUsers((prev) => prev.filter((user) => user.id !== userToDelete.id));
-      // TODO axios.delete(`/api/friends/${userToDelete.id}`)
+    if (friendToDelete) {
+      setFriends((prev) => prev.filter((f) => f.id !== friendToDelete.id));
     }
     setModalOpen(false);
-    setUserToDelete(null);
+    setFriendToDelete(null);
   };
 
   const cancelDelete = () => {
     setModalOpen(false);
-    setUserToDelete(null);
+    setFriendToDelete(null);
   };
 
-  const filteredUsers = useMemo(() => {
-    return users
-      .filter((user) => {
+  const filteredFriends = useMemo(() => {
+    return friends
+      .filter((friend) => {
+        if (!friend.friend) return false;
+
         const query = search.toLowerCase();
-        const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+        const fullName =
+          `${friend.friend.firstName} ${friend.friend.lastName}`.toLowerCase();
         return (
-          user.username.toLowerCase().includes(query) ||
+          friend.friend.username.toLowerCase().includes(query) ||
           fullName.includes(query)
         );
       })
-      .filter((user) => (onlineOnly ? user.isOnline : true))
-      .sort((a, b) => b.lastSeen.getTime() - a.lastSeen.getTime());
-  }, [users, search, onlineOnly]);
+      .filter((friend) => (onlineOnly ? friend.friend?.isOnline : true))
+      .sort(
+        (a, b) =>
+          (b.friend?.lastSeen?.getTime?.() || 0) -
+          (a.friend?.lastSeen?.getTime?.() || 0),
+      );
+  }, [friends, search, onlineOnly]);
 
   return (
     <>
@@ -190,7 +199,7 @@ const FriendsList: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredUsers.length === 0 ? (
+                {filteredFriends.length === 0 ? (
                   <tr>
                     <td
                       colSpan={3}
@@ -200,26 +209,27 @@ const FriendsList: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 transition">
+                  filteredFriends.map((friend) => (
+                    <tr key={friend.id} className="hover:bg-gray-50 transition">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="relative">
                             <img
-                              src={user.avatarUrl}
-                              alt={user.username}
+                              src={friend.friend?.avatarUrl}
+                              alt={friend.friend?.username}
                               className="w-10 h-10 rounded-full object-cover"
                             />
-                            {user.isOnline && (
+                            {friend.friend?.isOnline && (
                               <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
                             )}
                           </div>
                           <div>
                             <div className="font-medium text-gray-900">
-                              {user.firstName} {user.lastName}
+                              {friend.friend?.firstName}{" "}
+                              {friend.friend?.lastName}
                             </div>
                             <div className="text-sm text-gray-500">
-                              @{user.username}
+                              @{friend.friend?.username}
                             </div>
                           </div>
                         </div>
@@ -227,15 +237,20 @@ const FriendsList: React.FC = () => {
                       <td className="px-4 py-3 text-sm text-gray-600">
                         <span
                           className={
-                            user.isOnline ? "text-green-600 font-medium" : ""
+                            friend.friend?.isOnline
+                              ? "text-green-600 font-medium"
+                              : ""
                           }
                         >
-                          {formatLastSeen(user.lastSeen, user.isOnline)}
+                          {formatLastSeen(
+                            friend.friend?.lastSeen || new Date(),
+                            friend.friend?.isOnline || false,
+                          )}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button
-                          onClick={() => openDeleteModal(user)}
+                          onClick={() => openDeleteModal(friend)}
                           className="text-red-600 hover:text-red-800 text-sm font-medium px-3 py-1 rounded hover:bg-red-50 transition"
                         >
                           Удалить
@@ -250,15 +265,15 @@ const FriendsList: React.FC = () => {
         </div>
 
         <div className="mt-3 text-sm text-gray-500">
-          Всего друзей: {filteredUsers.length}
+          Всего друзей: {filteredFriends.length}
         </div>
       </div>
 
       <ConfirmModal
         isOpen={modalOpen}
         userName={
-          userToDelete
-            ? `${userToDelete.firstName} ${userToDelete.lastName}`
+          friendToDelete
+            ? `${friendToDelete.friend?.firstName} ${friendToDelete?.friend?.lastName}`
             : ""
         }
         onConfirm={confirmDelete}

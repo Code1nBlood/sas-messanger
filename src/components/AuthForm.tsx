@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { User, Database, DatabaseZap } from "lucide-react";
-import { isMockMode, setMockMode } from "../services/config";
+import { User, DatabaseZap } from "lucide-react";
+import { setMockMode } from "../services/config";
 
 type AuthFormProps = {
   onLogin: (loginIdentifier: string, password: string) => void;
