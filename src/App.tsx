@@ -485,6 +485,14 @@ export default function App() {
           } // Mock fallback disabled
           onClose={() => onSelectPanelTab("chats")} // Close modal and switch to chats
           onLogout={handleLogout}
+          onAvatarChange={(newAvatarUrl: string) => {
+            setCurrentUser((prev) => {
+              if (!prev) return prev;
+              const updated = { ...prev, avatarUrl: newAvatarUrl };
+              localStorage.setItem("currentUser", JSON.stringify(updated));
+              return updated;
+            });
+          }}
         />
       )}
       </div>

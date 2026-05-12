@@ -1,15 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { User } from "../types/user";
 import { Avatar } from "./Avatar";
 import { X, PenLine } from "lucide-react";
+import { authService } from "../services/authService";
 
 interface ProfileModalProps {
   currentUser: User;
   onClose: () => void;
   onLogout: () => void;
+  onAvatarChange: (newAvatarUrl: string) => void;
 }
 
-export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose, onLogout }) => {
+export const ProfileModal: React.FC<ProfileModalProps> = ({
+  currentUser,
+  onClose,
+  onLogout,
+  onAvatarChange,
+}) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingSurname, setIsEditingSurname] = useState(false);
   const [isEditingAbout, setIsEditingAbout] = useState(false);
@@ -19,8 +26,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
   const [surname, setSurname] = useState(currentUser.surname || "");
   const [about, setAbout] = useState(currentUser.about || "");
   const [identifier, setIdentifier] = useState(
-    currentUser.email ? `@${currentUser.email.split("@")[0]}` : "@user"
+    currentUser.email ? `@${currentUser.email.split("@")[0]}` : "@user",
   );
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
     // Отправка даных в бек TODO
@@ -30,8 +39,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-gray-950/55"
-         style={{ left: '80px' }}> 
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-gray-950/55"
+      style={{ left: "80px" }}
+    >
       <div className="relative bg-white rounded-lg shadow-xl p-6 w-11/12 max-w-lg mx-auto">
         <button
           onClick={onClose}
@@ -42,13 +53,51 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
         <h2 className="text-2xl font-bold mb-6 text-center">Профиль</h2>
 
         <div className="flex flex-col items-center mb-6">
-          <Avatar title={currentUser.name || "N/A"} avatarUrl={currentUser.avatarUrl} size="lg" />
+          <div className="relative">
+            <Avatar
+              title={currentUser.name || "N/A"}
+              avatarUrl={currentUser.avatarUrl}
+              size="lg"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingAvatar}
+              className="absolute -bottom-0.5 -right-0.5 bg-blue-500 text-white rounded-full p-1.5 shadow-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-wait"
+              title="Изменить аватар"
+            >
+              <PenLine size={16} />
+            </button>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setIsUploadingAvatar(true);
+              try {
+                const result = await authService.setAvatar(file);
+                onAvatarChange(result.avatarUrl);
+              } catch (err: any) {
+                alert(`Ошибка загрузки аватара: ${err.message || err}`);
+              } finally {
+                setIsUploadingAvatar(false);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }
+            }}
+          />
           {/* Идентификатор */}
           <div className="flex items-center mt-3">
             {isEditingIdentifier ? (
               <input
                 type="text"
-                value={identifier.startsWith('@') ? identifier.substring(1) : identifier}
+                value={
+                  identifier.startsWith("@")
+                    ? identifier.substring(1)
+                    : identifier
+                }
                 onChange={(e) => setIdentifier(`@${e.target.value}`)}
                 onBlur={handleSave}
                 className="p-1 border border-gray-300 rounded-md text-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -56,7 +105,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
             ) : (
               <span className="text-xl font-semibold">{identifier}</span>
             )}
-            <button onClick={() => setIsEditingIdentifier(!isEditingIdentifier)} className="ml-2 p-1 text-blue-500 hover:text-blue-700">
+            <button
+              onClick={() => setIsEditingIdentifier(!isEditingIdentifier)}
+              className="ml-2 p-1 text-blue-500 hover:text-blue-700"
+            >
               <PenLine />
             </button>
           </div>
@@ -75,9 +127,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
                 className="flex-1 ml-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             ) : (
-              <span className="flex-1 ml-4 text-gray-800">{name || "Не указано"}</span>
+              <span className="flex-1 ml-4 text-gray-800">
+                {name || "Не указано"}
+              </span>
             )}
-            <button onClick={() => setIsEditingName(!isEditingName)} className="ml-2 p-1 text-blue-500 hover:text-blue-700">
+            <button
+              onClick={() => setIsEditingName(!isEditingName)}
+              className="ml-2 p-1 text-blue-500 hover:text-blue-700"
+            >
               <PenLine />
             </button>
           </div>
@@ -94,9 +151,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
                 className="flex-1 ml-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             ) : (
-              <span className="flex-1 ml-4 text-gray-800">{surname || "Не указана"}</span>
+              <span className="flex-1 ml-4 text-gray-800">
+                {surname || "Не указана"}
+              </span>
             )}
-            <button onClick={() => setIsEditingSurname(!isEditingSurname)} className="ml-2 p-1 text-blue-500 hover:text-blue-700">
+            <button
+              onClick={() => setIsEditingSurname(!isEditingSurname)}
+              className="ml-2 p-1 text-blue-500 hover:text-blue-700"
+            >
               <PenLine />
             </button>
           </div>
@@ -113,9 +175,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ currentUser, onClose
                 className="flex-1 ml-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               ></textarea>
             ) : (
-              <span className="flex-1 ml-4 text-gray-800">{about || "Расскажите о себе..."}</span>
+              <span className="flex-1 ml-4 text-gray-800">
+                {about || "Расскажите о себе..."}
+              </span>
             )}
-            <button onClick={() => setIsEditingAbout(!isEditingAbout)} className="ml-2 p-1 text-blue-500 hover:text-blue-700">
+            <button
+              onClick={() => setIsEditingAbout(!isEditingAbout)}
+              className="ml-2 p-1 text-blue-500 hover:text-blue-700"
+            >
               <PenLine />
             </button>
           </div>

@@ -123,6 +123,28 @@ export const authService = {
     return response.json();
   },
 
+  // Установка аватара пользователя
+  setAvatar: async (file: File): Promise<{ avatarUrl: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    const response = await fetch(`${BASE_URL}/user/setAvatar`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Failed to set avatar' }));
+      throw new Error(errorData.message || errorData.title || 'Failed to set avatar');
+    }
+
+    return response.json();
+  },
+
   // Метод для защищенных запросов с токеном
   authFetch: async (url: string, options: RequestInit = {}) => {
     const fullUrl = `${BASE_URL}${url}`;
