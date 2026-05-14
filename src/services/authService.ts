@@ -1,9 +1,14 @@
+import { isMockMode } from './config';
+import { mockApiService } from './mockService';
+
 export const AUTH_TOKEN_KEY = 'authToken';
 
 export type LoginResponse = {
+  id?: number;
   username: string;
   email: string;
   token: string;
+  avatarUrl?: string | null;
 };
 
 const BASE_URL = 'http://26.65.128.174:5164';
@@ -18,6 +23,11 @@ const getAuthHeaders = (): HeadersInit => {
 
 export const authService = {
   login: async (login: string, password: string): Promise<LoginResponse> => {
+    if (isMockMode()) {
+      const data = await mockApiService.login(login);
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      return data;
+    }
     const response = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -61,6 +71,7 @@ export const authService = {
 
   // Получение чатов
   getChats: async () => {
+    if (isMockMode()) return mockApiService.getChats();
     const response = await authService.authFetch('/chats');
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');
@@ -74,6 +85,7 @@ export const authService = {
 
   // Получение сообщений чата
   getChatMessages: async (chatId: number, page: number = 1, pageSize: number = 20) => {
+    if (isMockMode()) return mockApiService.getChatMessages(chatId);
     const response = await authService.authFetch(`/chats/${chatId}/messages?page=${page}&pageSize=${pageSize}`);
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');
@@ -96,6 +108,40 @@ export const authService = {
       console.error(`createChat failed: ${response.status} ${response.statusText}`, errorText);
       throw new Error(`Failed to create chat: ${response.status} ${errorText}`);
     }
+    return response.json();
+  },
+
+  // Получение списка друзей
+  getFriends: async () => {
+    if (isMockMode()) return mockApiService.getFriends();
+    const response = await authService.authFetch('/friends');
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`getFriends failed: ${response.status} ${response.statusText}`, errorText);
+      throw new Error(`Failed to load friends: ${response.status} ${errorText}`);
+    }
+    return response.json();
+  },
+
+  // Установка аватара пользователя
+  setAvatar: async (file: File): Promise<{ avatarUrl: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    const response = await fetch(`${BASE_URL}/user/setAvatar`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Failed to set avatar' }));
+      throw new Error(errorData.message || errorData.title || 'Failed to set avatar');
+    }
+
     return response.json();
   },
 

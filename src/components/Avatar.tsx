@@ -17,21 +17,15 @@ export function Avatar({
         lg: 'h-16 w-16',
     };
 
-    const initial = title.trim().slice(0, 1).toUpperCase();
+    const src = avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=3b82f6&color=fff&size=128`;
 
     return (
         <div className="relative shrink-0">
-            {avatarUrl ?(
-                <img
-                    src={avatarUrl}
-                    alt={title}
-                    className={`${sizes[size]} rounded-full object-cover`}
-                />
-            ): (
-                <div className={`${sizes[size]} flex items-center justify-center rounded-full bg-blue-200 font-semibold text-blue-700`}>
-                    {initial}
-                </div>
-            )}
+            <img
+                src={src}
+                alt={title}
+                className={`${sizes[size]} rounded-full object-cover`}
+            />
 
             <span
                 className={[

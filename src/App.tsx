@@ -13,9 +13,9 @@ import {
   getCurrentTime,
   formatMessageTime,
 } from "./helpers/helpers";
-import { authService, AUTH_TOKEN_KEY } from "./services/authService";
-import type { LoginResponse } from "./services/authService";
+import { authService } from "./services/authService";
 import { signalRService } from "./services/signalRService";
+import { isMockMode, setMockMode } from "./services/config";
 
 export default function App() {
   // const [chats, setChats] = useState<Chat[]>(mockChats); // Mock disabled
@@ -127,6 +127,9 @@ export default function App() {
         try {
           const user: User = JSON.parse(savedUser);
           setCurrentUser(user);
+          if (!localStorage.getItem("currentUserId")) {
+            localStorage.setItem("currentUserId", user.id || "1");
+          }
 
           loadChats();
 
@@ -166,15 +169,18 @@ export default function App() {
         const username = data.username ?? loginIdentifier.split("@")[0];
         const emailFromData =
           data.email ?? (loginIdentifier.includes("@") ? loginIdentifier : "");
+        const userId = (data.id ?? 1).toString();
         localStorage.setItem(
           "currentUser",
           JSON.stringify({
-            id: "1",
+            id: userId,
             email: emailFromData,
             name: username,
+            avatarUrl: data.avatarUrl || null,
           } as User),
         );
-        setCurrentUser({ id: "1", email: emailFromData, name: username });
+        localStorage.setItem("currentUserId", userId);
+        setCurrentUser({ id: userId, email: emailFromData, name: username, avatarUrl: data.avatarUrl || undefined });
 
         // Загрузка чатов с сервера
         await loadChats();
@@ -415,12 +421,24 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-100 text-slate-900">
-      <LeftPanel
-        onOpenAccount={() => onSelectPanelTab("account")}
-        activePanelTab={activePanelTab}
-        onSelectPanelTab={onSelectPanelTab}
-      />
+    <div className="flex h-screen bg-slate-100 text-slate-900 flex-col">
+      {isMockMode() && (
+        <div className="bg-amber-100 border-b border-amber-200 px-4 py-1 text-xs text-amber-800 flex justify-between items-center">
+          <span>⚠️ Работа в <b>MOCK</b> режиме (сервер не используется)</span>
+          <button 
+            onClick={() => setMockMode(false)}
+            className="underline font-bold hover:text-amber-600"
+          >
+            Переключиться на реальный сервер
+          </button>
+        </div>
+      )}
+      <div className="flex flex-1 overflow-hidden">
+        <LeftPanel
+          onOpenAccount={() => onSelectPanelTab("account")}
+          activePanelTab={activePanelTab}
+          onSelectPanelTab={onSelectPanelTab}
+        />
       {activePanelTab === "chats" && (
         <>
           <div className="p-2 border-b border-slate-200">
@@ -467,8 +485,17 @@ export default function App() {
           } // Mock fallback disabled
           onClose={() => onSelectPanelTab("chats")} // Close modal and switch to chats
           onLogout={handleLogout}
+          onAvatarChange={(newAvatarUrl: string) => {
+            setCurrentUser((prev) => {
+              if (!prev) return prev;
+              const updated = { ...prev, avatarUrl: newAvatarUrl };
+              localStorage.setItem("currentUser", JSON.stringify(updated));
+              return updated;
+            });
+          }}
         />
       )}
+      </div>
     </div>
   );
 }
