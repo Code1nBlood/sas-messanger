@@ -1,42 +1,49 @@
-import { mockChats } from '../data/mockChats';
-import { mockMessages } from '../data/mockMessages';
-import type { LoginResponse } from './authService';
+import { mockChats } from "../data/mockChats";
+import { mockMessages } from "../data/mockMessages";
+import type { LoginResponse } from "./authService";
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const mockApiService = {
   login: async (login: string): Promise<LoginResponse> => {
     await sleep(500);
     return {
       id: 4,
-      username: login || 'MockUser',
-      email: `${login || 'mock'}@example.com`,
-      token: 'mock-jwt-token-' + Date.now(),
+      username: login || "MockUser",
+      email: `${login || "mock"}@example.com`,
+      token: "mock-jwt-token-" + Date.now(),
       avatarUrl: null,
     };
   },
 
   getChats: async () => {
     await sleep(300);
-    return mockChats.map(chat => ({
+    return mockChats.map((chat) => ({
       ...chat,
       id: chat.id,
       name: chat.title,
       lastMessage: { value: chat.lastMessage },
-      participants: []
+      participants: [],
     }));
   },
 
   getChatMessages: async (chatId: number) => {
     await sleep(200);
+    //  база для времени
+    const today = new Date().toISOString().split("T")[0];
     return mockMessages
-      .filter(m => m.chatId === String(chatId))
-      .map(m => ({
-        id: m.id,
-        userName: m.sender === 'me' ? 'MockUser' : 'OtherUser',
-        value: m.text,
-        date: new Date().toISOString(),
-      }));
+      .filter((m) => m.chatId === String(chatId))
+      .map((m) => {
+        const isoDate = m.time
+          ? `${today}T${m.time}:00`
+          : new Date().toISOString();
+        return {
+          id: m.id,
+          userName: m.sender === "me" ? "MockUser" : "OtherUser",
+          value: m.text,
+          date: isoDate,
+        };
+      });
   },
 
   createChat: async (name: string) => {
@@ -60,7 +67,8 @@ export const mockApiService = {
           username: "qweqwd",
           email: "312@mail.ru",
           surname: null,
-          avatarUrl: "https://i.pinimg.com/736x/e7/9b/d4/e79bd437b8aaceb773f0a7fe343b4709.jpg",
+          avatarUrl:
+            "https://i.pinimg.com/736x/e7/9b/d4/e79bd437b8aaceb773f0a7fe343b4709.jpg",
         },
         {
           id: 5,
@@ -71,5 +79,5 @@ export const mockApiService = {
         },
       ],
     };
-  }
+  },
 };

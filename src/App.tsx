@@ -133,25 +133,39 @@ export default function App() {
 
           loadChats();
 
-          // Подключение SignalR
-          signalRService
-            .connect(token)
-            .then(() => {
-              console.log("SignalR connected in useEffect");
-              signalRService.onNewMessage((author, messageText) => {
-                const currentChatId = activeChatIdRef.current;
-                if (!currentChatId) return;
-                const newMsg: Message = {
-                  id: Date.now().toString(),
-                  chatId: currentChatId,
-                  sender: author === user.name ? "me" : "other",
-                  text: messageText,
-                  time: getCurrentTime(),
-                };
-                setMessages((prev) => [...prev, newMsg]);
-              });
-            })
-            .catch((err) => console.error("SignalR connection failed", err));
+          // Подключение SignalR (не в моковом режиме)
+          if (!isMockMode()) {
+            signalRService
+              .connect(token)
+              .then(() => {
+                console.log("SignalR connected in useEffect");
+                signalRService.onNewMessage((author, messageText) => {
+                  const currentChatId = activeChatIdRef.current;
+                  if (!currentChatId) return;
+
+                  // Проверяем дубликаты
+                  setMessages((prev) => {
+                    const exists = prev.some(
+                      (m) =>
+                        m.chatId === currentChatId &&
+                        m.text === messageText &&
+                        m.sender === (author === user.name ? "me" : "other"),
+                    );
+                    if (exists) return prev;
+
+                    const newMsg: Message = {
+                      id: Date.now().toString(),
+                      chatId: currentChatId,
+                      sender: author === user.name ? "me" : "other",
+                      text: messageText,
+                      time: getCurrentTime(),
+                    };
+                    return [...prev, newMsg];
+                  });
+                });
+              })
+              .catch((err) => console.error("SignalR connection failed", err));
+          }
         } catch (e) {
           console.error("Ошибка чтения пользователя из localStorage", e);
           authService.logout();
@@ -180,28 +194,43 @@ export default function App() {
           } as User),
         );
         localStorage.setItem("currentUserId", userId);
-        setCurrentUser({ id: userId, email: emailFromData, name: username, avatarUrl: data.avatarUrl || undefined });
+        setCurrentUser({
+          id: userId,
+          email: emailFromData,
+          name: username,
+          avatarUrl: data.avatarUrl || undefined,
+        });
 
         // Загрузка чатов с сервера
         await loadChats();
 
-        // Подключение SignalR
-        await signalRService.connect(data.token);
-        signalRService.onNewMessage((author, messageText) => {
-          const currentChatId = activeChatIdRef.current;
-          if (!currentChatId) return;
-          const newMsg: Message = {
-            id: Date.now().toString(),
-            chatId: currentChatId,
-            sender: author === username ? "me" : "other",
-            text: messageText,
-            time: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          };
-          setMessages((prev) => [...prev, newMsg]);
-        });
+        if (!isMockMode()) {
+          await signalRService.connect(data.token);
+          signalRService.onNewMessage((author, messageText) => {
+            const currentChatId = activeChatIdRef.current;
+            if (!currentChatId) return;
+
+            // Проверяем, есть ли уже сообщение с таким текстом в текущем чате
+            setMessages((prev) => {
+              const exists = prev.some(
+                (m) =>
+                  m.chatId === currentChatId &&
+                  m.text === messageText &&
+                  m.sender === (author === username ? "me" : "other"),
+              );
+              if (exists) return prev;
+
+              const newMsg: Message = {
+                id: Date.now().toString(),
+                chatId: currentChatId,
+                sender: author === username ? "me" : "other",
+                text: messageText,
+                time: getCurrentTime(),
+              };
+              return [...prev, newMsg];
+            });
+          });
+        }
       } catch (err: any) {
         alert(`Ошибка входа: ${err.message || "Попробуйте позже."}`);
       }
@@ -237,7 +266,6 @@ export default function App() {
 
     const chatIdNum = parseInt(chatId);
     if (!isNaN(chatIdNum)) {
-      // Вход в чат через SignalR
       signalRService
         .joinChat(chatIdNum)
         .catch((err) => console.error("Join chat failed", err));
@@ -388,6 +416,22 @@ export default function App() {
     const chatIdNum = parseInt(activeChatId);
     if (isNaN(chatIdNum)) return;
 
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      chatId: activeChatId,
+      sender: "me",
+      text: text,
+      time: getCurrentTime(),
+      attachments: attachments?.map((att) => ({
+        id: att.id,
+        type: att.type,
+        name: att.name,
+        url: att.url,
+        size: att.size,
+      })),
+    };
+    setMessages((prev) => [...prev, newMessage]);
+
     try {
       await signalRService.sendMessage(chatIdNum, text, undefined);
     } catch (err) {
@@ -424,8 +468,10 @@ export default function App() {
     <div className="flex h-screen bg-slate-100 text-slate-900 flex-col">
       {isMockMode() && (
         <div className="bg-amber-100 border-b border-amber-200 px-4 py-1 text-xs text-amber-800 flex justify-between items-center">
-          <span>⚠️ Работа в <b>MOCK</b> режиме (сервер не используется)</span>
-          <button 
+          <span>
+            ⚠️ Работа в <b>MOCK</b> режиме (сервер не используется)
+          </span>
+          <button
             onClick={() => setMockMode(false)}
             className="underline font-bold hover:text-amber-600"
           >
@@ -439,62 +485,62 @@ export default function App() {
           activePanelTab={activePanelTab}
           onSelectPanelTab={onSelectPanelTab}
         />
-      {activePanelTab === "chats" && (
-        <>
-          <div className="p-2 border-b border-slate-200">
-            <button
-              onClick={handleCreateTestChat}
-              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-            >
-              + Создать тестовый чат
-            </button>
-          </div>
-          <ChatList
-            chats={filteredChats}
-            activeChatId={activeChatId}
-            onSelectChat={handleSelectedChat}
-            onSearch={setSearchVal}
-            searchVal={searchVal}
-          />
+        {activePanelTab === "chats" && (
+          <>
+            <div className="p-2 border-b border-slate-200">
+              <button
+                onClick={handleCreateTestChat}
+                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+              >
+                + Создать тестовый чат
+              </button>
+            </div>
+            <ChatList
+              chats={filteredChats}
+              activeChatId={activeChatId}
+              onSelectChat={handleSelectedChat}
+              onSearch={setSearchVal}
+              searchVal={searchVal}
+            />
 
-          <ChatWindow
-            chat={activeChat}
-            messages={currentMessages}
-            inputValue={inputValue}
-            onInputChange={setInputValue}
-            onSendMessage={handleSendMessage}
-            onCloseChat={handleCloseChat}
-            onAttachFiles={handleAttachFiles}
-            pendingAttachments={pendingAttachments}
-            onRemoveAttachment={handleRemoveAttachment}
-            onLoadMore={loadMoreMessages}
-            hasMore={hasMoreMessages}
-            activeChatId={activeChatId}
+            <ChatWindow
+              chat={activeChat}
+              messages={currentMessages}
+              inputValue={inputValue}
+              onInputChange={setInputValue}
+              onSendMessage={handleSendMessage}
+              onCloseChat={handleCloseChat}
+              onAttachFiles={handleAttachFiles}
+              pendingAttachments={pendingAttachments}
+              onRemoveAttachment={handleRemoveAttachment}
+              onLoadMore={loadMoreMessages}
+              hasMore={hasMoreMessages}
+              activeChatId={activeChatId}
+            />
+          </>
+        )}
+        {activePanelTab === "friends" && <FriendsList />}
+        {activePanelTab === "account" && (
+          <ProfileModal
+            currentUser={
+              currentUser || {
+                id: "mock",
+                name: "Test",
+                email: "test@example.com",
+              }
+            } // Mock fallback disabled
+            onClose={() => onSelectPanelTab("chats")} // Close modal and switch to chats
+            onLogout={handleLogout}
+            onAvatarChange={(newAvatarUrl: string) => {
+              setCurrentUser((prev) => {
+                if (!prev) return prev;
+                const updated = { ...prev, avatarUrl: newAvatarUrl };
+                localStorage.setItem("currentUser", JSON.stringify(updated));
+                return updated;
+              });
+            }}
           />
-        </>
-      )}
-      {activePanelTab === "friends" && <FriendsList />}
-      {activePanelTab === "account" && (
-        <ProfileModal
-          currentUser={
-            currentUser || {
-              id: "mock",
-              name: "Test",
-              email: "test@example.com",
-            }
-          } // Mock fallback disabled
-          onClose={() => onSelectPanelTab("chats")} // Close modal and switch to chats
-          onLogout={handleLogout}
-          onAvatarChange={(newAvatarUrl: string) => {
-            setCurrentUser((prev) => {
-              if (!prev) return prev;
-              const updated = { ...prev, avatarUrl: newAvatarUrl };
-              localStorage.setItem("currentUser", JSON.stringify(updated));
-              return updated;
-            });
-          }}
-        />
-      )}
+        )}
       </div>
     </div>
   );
