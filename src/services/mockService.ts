@@ -80,4 +80,41 @@ export const mockApiService = {
       ],
     };
   },
+
+  getFriendRequests: async () => {
+    await sleep(300);
+    return [
+      {
+        id: 101,
+        username: "alex_new",
+        firstName: "Алексей",
+        lastName: "Новиков",
+        avatarUrl: "https://i.pravatar.cc/150?u=alex_new",
+      },
+      {
+        id: 102,
+        username: "elena_88",
+        firstName: "Елена",
+        lastName: "Смирнова",
+        avatarUrl: "https://i.pravatar.cc/150?u=elena_88",
+      },
+      {
+        id: 103,
+        username: "dmitry_k",
+        firstName: "Дмитрий",
+        lastName: "Кузнецов",
+        avatarUrl: "https://i.pravatar.cc/150?u=dmitry_k",
+      },
+    ];
+  },
+
+  acceptFriendRequest: async (requestId: number) => {
+    await sleep(300);
+    return { success: true, requestId };
+  },
+
+  declineFriendRequest: async (requestId: number) => {
+    await sleep(300);
+    return { success: true, requestId };
+  },
 };
