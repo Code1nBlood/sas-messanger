@@ -81,13 +81,15 @@ const FriendsList: React.FC = () => {
     const loadFriends = async () => {
       try {
         const data = await authService.getFriends();
-        console.log('Friends API response:', JSON.stringify(data, null, 2));
+        console.log("Friends API response:", JSON.stringify(data, null, 2));
         const mapped: Friend[] = (data.friends || []).map((item: any) => ({
           id: item.id,
           username: item.username || "unknown",
           firstName: item.firstName || item.username || "",
           lastName: item.lastName || item.surname || "",
-          avatarUrl: item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.username || "User")}&background=3b82f6&color=fff&size=40`,
+          avatarUrl:
+            item.avatarUrl ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(item.username || "User")}&background=3b82f6&color=fff&size=40`,
           lastSeen: new Date(),
           isOnline: false,
         }));
@@ -122,8 +124,7 @@ const FriendsList: React.FC = () => {
     return friends
       .filter((friend) => {
         const query = search.toLowerCase();
-        const fullName =
-          `${friend.firstName} ${friend.lastName}`.toLowerCase();
+        const fullName = `${friend.firstName} ${friend.lastName}`.toLowerCase();
         return (
           friend.username.toLowerCase().includes(query) ||
           fullName.includes(query)
@@ -132,15 +133,19 @@ const FriendsList: React.FC = () => {
       .filter((friend) => (onlineOnly ? friend.isOnline : true))
       .sort(
         (a, b) =>
-          (b.lastSeen?.getTime?.() || 0) -
-          (a.lastSeen?.getTime?.() || 0),
+          (b.lastSeen?.getTime?.() || 0) - (a.lastSeen?.getTime?.() || 0),
       );
   }, [friends, search, onlineOnly]);
 
   return (
     <>
       <div className="flex-1 p-4 bg-gray-100 flex flex-col">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">Friends</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800">Friends</h2>
+          <button className="mb-4 bg-blue-600 rounded-lg font-medium border border-blue-950 text-amber-50 px-2 height h-3/4">
+            Запросы в друзья
+          </button>
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <input
@@ -205,8 +210,7 @@ const FriendsList: React.FC = () => {
                           </div>
                           <div>
                             <div className="font-medium text-gray-900">
-                              {friend.firstName}{" "}
-                              {friend.lastName}
+                              {friend.firstName} {friend.lastName}
                             </div>
                             <div className="text-sm text-gray-500">
                               @{friend.username}
@@ -217,9 +221,7 @@ const FriendsList: React.FC = () => {
                       <td className="px-4 py-3 text-sm text-gray-600">
                         <span
                           className={
-                            friend.isOnline
-                              ? "text-green-600 font-medium"
-                              : ""
+                            friend.isOnline ? "text-green-600 font-medium" : ""
                           }
                         >
                           {formatLastSeen(
