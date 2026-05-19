@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { authService } from "../services/authService";
 import { X, UserX } from "lucide-react";
+import { isMockMode } from "../services/config";
+import { mockApiService } from "../services/mockService";
 
 type Friend = {
   id: number;
@@ -79,7 +81,11 @@ const ConfirmModal: React.FC<{
   );
 };
 
-const FriendsList: React.FC = () => {
+type FriendsListProps = {
+  onChatCreated?: (chatId: string) => void;
+};
+
+const FriendsList: React.FC<FriendsListProps> = ({ onChatCreated }) => {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [search, setSearch] = useState("");
   const [onlineOnly, setOnlineOnly] = useState(false);
@@ -142,6 +148,24 @@ const FriendsList: React.FC = () => {
       setFriendRequests(mapped);
     } catch (error) {
       console.error("Failed to load friend requests:", error);
+    }
+  };
+
+  const handleCreateChat = async (friend: Friend) => {
+    const chatName = `${friend.firstName} ${friend.lastName}`;
+    try {
+      let chatId: string;
+      if (isMockMode()) {
+        const data = await mockApiService.createChat(chatName, [friend.id]);
+        chatId = String(data.id);
+      } else {
+        const data = await authService.createChat(chatName, [friend.id]);
+        chatId = String(data?.id ?? data?.Id ?? "");
+      }
+      console.log(`Чат с ${chatName} создан, id=${chatId}`);
+      onChatCreated?.(chatId);
+    } catch (error) {
+      console.error("Ошибка создания чата:", error);
     }
   };
 
@@ -209,7 +233,7 @@ const FriendsList: React.FC = () => {
           >
             Запросы в друзья
             {friendRequests.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 shadow">
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-5 h-5 flex items-center justify-center px-1 shadow">
                 {friendRequests.length}
               </span>
             )}
@@ -266,7 +290,10 @@ const FriendsList: React.FC = () => {
                   filteredFriends.map((friend) => (
                     <tr key={friend.id} className="hover:bg-gray-50 transition">
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => handleCreateChat(friend)}
+                          className="flex items-center gap-3 w-full text-left hover:bg-gray-100 rounded-lg p-2 -m-2 transition"
+                        >
                           <div className="relative">
                             <img
                               src={friend.avatarUrl}
@@ -285,7 +312,7 @@ const FriendsList: React.FC = () => {
                               @{friend.username}
                             </div>
                           </div>
-                        </div>
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         <span
@@ -367,7 +394,7 @@ const FriendsList: React.FC = () => {
                       <img
                         src={request.avatarUrl}
                         alt={request.username}
-                        className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                        className="w-14 h-14 rounded-full object-cover shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-gray-900 truncate">
@@ -377,7 +404,7 @@ const FriendsList: React.FC = () => {
                           @{request.username}
                         </div>
                       </div>
-                      <div className="flex gap-2 flex-shrink-0">
+                      <div className="flex gap-2 shrink-0">
                         <button
                           onClick={() => handleAcceptRequest(request.id)}
                           className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 active:bg-blue-800 transition"
