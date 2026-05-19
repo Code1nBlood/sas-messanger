@@ -72,36 +72,6 @@ export default function App() {
     }
   }, []);
 
-  // функция для создания тестового чата
-  async function handleCreateTestChat() {
-    const chatName = prompt("Введите название чата:", "Тестовый чат");
-    if (!chatName) return;
-
-    const participantsStr = prompt(
-      "Введите ID участников через запятую (например: 5):",
-      "5",
-    );
-    if (!participantsStr) return;
-
-    const participantIds = participantsStr
-      .split(",")
-      .map((s) => parseInt(s.trim()))
-      .filter((n) => !isNaN(n));
-    if (participantIds.length === 0) {
-      alert("Неверные ID участников");
-      return;
-    }
-
-    try {
-      const data = await authService.createChat(chatName, participantIds);
-      console.log("Chat created:", data);
-      alert("Чат создан! Обновляем список...");
-      await loadChats();
-    } catch (err: any) {
-      alert("Ошибка создания чата: " + (err.message || err));
-    }
-  }
-
   const filteredChats = useMemo(() => {
     const query = searchVal.trim().toLowerCase();
 
@@ -487,14 +457,6 @@ export default function App() {
         />
         {activePanelTab === "chats" && (
           <>
-            <div className="p-2 border-b border-slate-200">
-              <button
-                onClick={handleCreateTestChat}
-                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-              >
-                + Создать тестовый чат
-              </button>
-            </div>
             <ChatList
               chats={filteredChats}
               activeChatId={activeChatId}
@@ -519,7 +481,15 @@ export default function App() {
             />
           </>
         )}
-        {activePanelTab === "friends" && <FriendsList />}
+        {activePanelTab === "friends" && (
+          <FriendsList
+            onChatCreated={async (chatId: string) => {
+              onSelectPanelTab("chats");
+              await loadChats();
+              handleSelectedChat(chatId);
+            }}
+          />
+        )}
         {activePanelTab === "account" && (
           <ProfileModal
             currentUser={
